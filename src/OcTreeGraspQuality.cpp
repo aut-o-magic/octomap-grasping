@@ -13,9 +13,6 @@ OccupancyOcTreeBase<OcTreeNodeGraspQuality>::updateNodeLogOdds(node, update);
 // TODO Add stuff
 }
 
-OcTreeGraspQuality::~OcTreeGraspQuality()
-{
-}
 
 OcTreeGraspQuality::StaticMemberInitializer OcTreeGraspQuality::ocTreeGraspQualityMemberInit;
 

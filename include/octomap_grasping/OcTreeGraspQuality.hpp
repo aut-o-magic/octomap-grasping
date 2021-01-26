@@ -14,6 +14,11 @@ namespace octomap
 
     OcTreeNodeGraspQuality(const OcTreeNodeGraspQuality& rhs) : OcTreeNode(rhs) {}  // TODO add extra stuff
 
+    bool operator=(const OcTreeNodeGraspQuality& rhs)
+    {
+      return (value = rhs.value); // TODO add extra stuff
+    }
+
     bool operator==(const OcTreeNodeGraspQuality& rhs) const
     {
       return (rhs.value == value); // && ...  // TODO add extra stuff
@@ -31,7 +36,7 @@ namespace octomap
       // TODO add extra stuff
     }
 
-    virtual ~OcTreeNodeGraspQuality();
+    virtual ~OcTreeNodeGraspQuality() {};
 
     protected:
       // TODO add extra stuff
@@ -48,7 +53,7 @@ namespace octomap
 
     virtual void updateNodeLogOdds(OcTreeNodeGraspQuality* node, const float& update) const;
 
-    virtual ~OcTreeGraspQuality();
+    virtual ~OcTreeGraspQuality() {};
     
     protected:
     /**
