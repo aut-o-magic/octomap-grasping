@@ -1,5 +1,5 @@
-#ifndef OCTOMAP_GRASPING__OCTREEGRASPQUALITY_HPP_
-#define OCTOMAP_GRASPING__OCTREEGRASPQUALITY_HPP_
+#ifndef OCTOMAP_GRASPING__OCTREEGRIPPER_HPP_
+#define OCTOMAP_GRASPING__OCTREEGRIPPER_HPP_
 
 #include "octomap_grasping/visibility_control.h"
 #include <octomap/OcTreeNode.h>
@@ -7,24 +7,24 @@
 
 namespace octomap
 {
-  class OcTreeNodeGraspQuality : public OcTreeNode
+  class OcTreeNodeGripper : public OcTreeNode
   {
     public:
-    OcTreeNodeGraspQuality() : OcTreeNode() {}       // TODO add extra stuff
+    OcTreeNodeGripper() : OcTreeNode() {}       // TODO add extra stuff
 
-    OcTreeNodeGraspQuality(const OcTreeNodeGraspQuality& rhs) : OcTreeNode(rhs) {}  // TODO add extra stuff
+    OcTreeNodeGripper(const OcTreeNodeGripper& rhs) : OcTreeNode(rhs) {}  // TODO add extra stuff
 
-    bool operator=(const OcTreeNodeGraspQuality& rhs)
+    bool operator=(const OcTreeNodeGripper& rhs)
     {
       return (value = rhs.value); // TODO add extra stuff
     }
 
-    bool operator==(const OcTreeNodeGraspQuality& rhs) const
+    bool operator==(const OcTreeNodeGripper& rhs) const
     {
       return (rhs.value == value); // && ...  // TODO add extra stuff
     }
 
-    void copyData(const OcTreeNodeGraspQuality& from)
+    void copyData(const OcTreeNodeGripper& from)
     {
       OcTreeNode::copyData(from);
       // TODO add extra stuff
@@ -36,24 +36,24 @@ namespace octomap
       // TODO add extra stuff
     }
 
-    virtual ~OcTreeNodeGraspQuality() {};
+    virtual ~OcTreeNodeGripper() {};
 
     protected:
       // TODO add extra stuff
   };
 
-  class OcTreeGraspQuality : public OccupancyOcTreeBase <OcTreeNodeGraspQuality>
+  class OcTreeGripper : public OccupancyOcTreeBase <OcTreeNodeGripper>
   {
     public:
-    OcTreeGraspQuality(double resolution);
+    OcTreeGripper(double resolution);
 
-    OcTreeGraspQuality* create() const {return new OcTreeGraspQuality(resolution);}
+    OcTreeGripper* create() const {return new OcTreeGripper(resolution);}
 
-    std::string getTreeType() const {return "OcTreeGraspQuality";}
+    std::string getTreeType() const {return "OcTreeGripper";}
 
-    virtual void updateNodeLogOdds(OcTreeNodeGraspQuality* node, const float& update) const;
+    virtual void updateNodeLogOdds(OcTreeNodeGripper* node, const float& update) const;
 
-    virtual ~OcTreeGraspQuality() {};
+    virtual ~OcTreeGripper() {};
     
     protected:
     /**
@@ -66,7 +66,7 @@ namespace octomap
     class StaticMemberInitializer{
     public:
       StaticMemberInitializer() {
-        OcTreeGraspQuality* tree = new OcTreeGraspQuality(0.1);
+        OcTreeGripper* tree = new OcTreeGripper(0.1);
         tree->clearKeyRays();
         AbstractOcTree::registerTreeType(tree);
       }
@@ -79,11 +79,11 @@ namespace octomap
       void ensureLinking() {};
     };
     /// to ensure static initialization (only once)
-    static StaticMemberInitializer ocTreeGraspQualityMemberInit;
+    static StaticMemberInitializer OcTreeGripperMemberInit;
   };
 
 }  // namespace octomap
 
-#endif  // OCTOMAP_GRASPING__OCTREEGRASPQUALITYMAP_HPP_
+#endif  // OCTOMAP_GRASPING__OcTreeGripperMAP_HPP_
 
 
