@@ -29,6 +29,11 @@ target_include_directories(OcTreeGraspQuality PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 
+add_library(OcTreeGripper src/OcTreeGripper.cpp)
+target_include_directories(OcTreeGripper PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>)
+
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
 target_compile_definitions(OcTreeGraspQuality PRIVATE "OCTOMAP_GRASPING_BUILDING_LIBRARY")
@@ -38,7 +43,7 @@ install(
   DESTINATION include
 )
 install(
-  TARGETS OcTreeGraspQuality
+  TARGETS OcTreeGraspQuality OcTreeGripper
   EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
@@ -60,7 +65,7 @@ ament_export_include_directories(
   include
 )
 ament_export_libraries(
-  OcTreeGraspQuality
+  OcTreeGraspQuality OcTreeGripper
 )
 ament_export_targets(
   export_${PROJECT_NAME}
