@@ -107,7 +107,7 @@ namespace octomap
 
     std::string getTreeType() const {return "OcTreeGraspQuality";}
 
-    ColorOcTree& toColorOcTree() const;
+    ColorOcTree toColorOcTree() const;
 
     // Custom conversion function with color coding for grasp quality
     operator ColorOcTree() const;
@@ -123,6 +123,13 @@ namespace octomap
     virtual bool isNodeCollapsible(const OcTreeNodeGraspQuality* node) const;
 
     OcTreeNodeGraspQuality* setNodeGraspQuality(const OcTreeKey& key, Eigen::Vector3f& _normal, Eigen::Matrix<float, 2, ORIENTATION_STEPS>& _angle_quality);
+
+    OcTreeNodeGraspQuality* setNodeGraspQuality(const point3d& octo_point3d, Eigen::Vector3f& _normal, Eigen::Matrix<float, 2, ORIENTATION_STEPS>& _angle_quality)
+    {
+      OcTreeKey key;
+      if (!this->coordToKeyChecked(octo_point3d, key)) return NULL;
+      return setNodeGraspQuality(key,_normal, _angle_quality);
+    }
 
     OcTreeNodeGraspQuality* setNodeGraspQuality(float x, float y, float z, Eigen::Vector3f& _normal, Eigen::Matrix<float, 2, ORIENTATION_STEPS>& _angle_quality)
     {

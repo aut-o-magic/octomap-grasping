@@ -44,19 +44,22 @@ namespace octomap
         OcTreeGripperMemberInit.ensureLinking();
     }
 
-    ColorOcTree& OcTreeGripper::toColorOcTree() const
+    ColorOcTree OcTreeGripper::toColorOcTree() const
     {
         ColorOcTree color_tree{this->getResolution()};
 
         // Copy tree occupancy contents and convert grasping surface flag to Red/Green
-        for(OcTreeGripper::tree_iterator it = this->begin_tree(), end=this->end_tree(); it!= end; ++it)
+        for(OcTreeGripper::leaf_iterator it = this->begin_leafs(), end=this->end_leafs(); it!= end; ++it)
         {
-            color_tree.updateNode(it.getKey(), true, true);
+            // cannot use node key as it is only valid for the previous node
+            point3d node_point = it.getCoordinate();
+            color_tree.updateNode(node_point, true, true);
 
-            if (it->isGraspingSurface()) color_tree.setNodeColor(it.getKey(), 0, 255, 0);
-            else color_tree.setNodeColor(it.getKey(), 255, 0, 0);
+            if (it->isGraspingSurface()) color_tree.setNodeColor(node_point.x(), node_point.y(), node_point.z(), 0, 255, 0);
+            else color_tree.setNodeColor(node_point.x(), node_point.y(), node_point.z(), 255, 0, 0);
         }
-        color_tree.updateInnerOccupancy();
+        color_tree.updateInnerOccupancy();        
+        //color_tree.writeColorHistogram("colorhistogram");
         return color_tree;
     }
     

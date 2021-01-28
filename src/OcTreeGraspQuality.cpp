@@ -56,21 +56,23 @@ namespace octomap
         ocTreeGraspQualityMemberInit.ensureLinking();
     }
 
-    ColorOcTree& OcTreeGraspQuality::toColorOcTree() const
+    ColorOcTree OcTreeGraspQuality::toColorOcTree() const
     {
         ColorOcTree color_tree{this->getResolution()};
 
         // Copy tree occupancy contents and convert GQ to color scale
-        for(OcTreeGraspQuality::tree_iterator it = this->begin_tree(), end=this->end_tree(); it!= end; ++it)
+        for(OcTreeGraspQuality::leaf_iterator it = this->begin_leafs(), end=this->end_leafs(); it!= end; ++it)
         {
-            color_tree.updateNode(it.getKey(), true, true);
+            // cannot use node key as it is only valid for the previous node
+            point3d node_point = it.getCoordinate();
+            color_tree.updateNode(node_point, true, true);
 
             // convert GQ to Red-Green color scale
             float max_gq = it->getGraspQuality().angle_quality.row(1).maxCoeff();
             uint16_t rg = max_gq*512;
             uint8_t r = std::max(255-rg,0);
             uint8_t g = std::max(rg-256,0);
-            color_tree.setNodeColor(it.getKey(), r, g, 0);
+            color_tree.setNodeColor(node_point.x(), node_point.y(), node_point.z(), r, g, 0);
         }
         color_tree.updateInnerOccupancy();
         return color_tree;

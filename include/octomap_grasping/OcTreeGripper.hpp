@@ -14,7 +14,7 @@ namespace octomap
     public:
     friend class OcTreeGripper; // needs access to node children with protected status
 
-    OcTreeNodeGripper() : OcTreeNode(), is_grasping_surface{} {}
+    OcTreeNodeGripper() : OcTreeNode(), is_grasping_surface{false} {}
 
     OcTreeNodeGripper(const OcTreeNodeGripper& rhs) : OcTreeNode(rhs), is_grasping_surface{rhs.is_grasping_surface} {}
 
@@ -63,7 +63,7 @@ namespace octomap
 
     std::string getTreeType() const {return "OcTreeGripper";}
 
-    ColorOcTree& toColorOcTree() const;
+    ColorOcTree toColorOcTree() const;
 
     // Custom conversion function with color coding for grasp quality
     operator ColorOcTree() const;
@@ -79,6 +79,13 @@ namespace octomap
     virtual bool isNodeCollapsible(const OcTreeNodeGripper* node) const;
 
     OcTreeNodeGripper* setNodeIsGraspingSurface(const OcTreeKey& key, bool grasping_surface_flag);
+
+    OcTreeNodeGripper* setNodeIsGraspingSurface(const point3d& octo_point3d, bool grasping_surface_flag)
+    {
+      OcTreeKey key;
+      if (!this->coordToKeyChecked(octo_point3d, key)) return NULL;
+      return setNodeIsGraspingSurface(key, grasping_surface_flag);
+    }
 
     OcTreeNodeGripper* setNodeIsGraspingSurface(float x, float y, float z, bool grasping_surface_flag)
     {
