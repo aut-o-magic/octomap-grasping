@@ -6,6 +6,7 @@
 #include <octomap/OcTreeNode.h>
 #include <octomap/OccupancyOcTreeBase.h>
 #include <eigen3/Eigen/Dense>
+#include <octomap/OcTree.h>
 
 #define ORIENTATION_STEPS 18 // discretisation of planar gripper orientation for grasp planning 
 
@@ -107,10 +108,17 @@ namespace octomap
 
     std::string getTreeType() const {return "OcTreeGraspQuality";}
 
+    bool operator=(const OcTreeGraspQuality& rhs)
+    {
+      *this = rhs;
+    }
+
     ColorOcTree toColorOcTree() const;
 
     // Custom conversion function with color coding for grasp quality
     operator ColorOcTree() const;
+
+    void importOcTree(const OcTree&);
 
     /**
      * Prunes a node when it is collapsible. This overloaded

@@ -6,6 +6,7 @@
 #include <octomap/OcTreeNode.h>
 #include <octomap/OccupancyOcTreeBase.h>
 #include <eigen3/Eigen/Dense>
+#include <octomap/OcTree.h>
 
 namespace octomap
 {
@@ -65,8 +66,18 @@ namespace octomap
 
     ColorOcTree toColorOcTree() const;
 
+    // TODO fix
+    bool operator=(const OcTreeGripper& rhs)
+    {
+      return(*this = rhs);
+    }
+
+
     // Custom conversion function with color coding for grasp quality
     operator ColorOcTree() const;
+
+    // CUstom import function from generic OcTree
+    void importOcTree(const OcTree&);
 
     /**
      * Prunes a node when it is collapsible. This overloaded
@@ -99,9 +110,15 @@ namespace octomap
     // update inner nodes, sets grasp quality to average child grasp quality
     void updateInnerOccupancy();
 
+    void setGripperOrientation(Eigen::Vector3f&);
+
+    Eigen::Vector3f getGripperOrientation() const;
+
     virtual ~OcTreeGripper() {};
     
     protected:
+    Eigen::Vector3f pointing_to_target_surface_normal; // Gripper orientation
+
     void updateInnerOccupancyRecurs(OcTreeNodeGripper* node, unsigned int depth);
 
     /**

@@ -83,6 +83,21 @@ namespace octomap
         return this->toColorOcTree();
     }
 
+    void OcTreeGraspQuality::importOcTree(const OcTree& octree_in)
+    {
+        this->clear();
+        this->setResolution(octree_in.getResolution());  
+
+        // Copy tree occupancy contents and convert grasping surface flag to Red/Green
+        for(OcTree::leaf_iterator it = octree_in.begin_leafs(), end=octree_in.end_leafs(); it!= end; ++it)
+        {
+            // cannot use node key as it is only valid for the previous node
+            point3d node_point = it.getCoordinate();
+            this->updateNode(node_point, true, true);
+        }
+        this->updateInnerOccupancy();
+    }
+
     OcTreeNodeGraspQuality* OcTreeGraspQuality::setNodeGraspQuality(const OcTreeKey& key, Eigen::Vector3f& _normal, Eigen::Matrix<float, 2, ORIENTATION_STEPS>& _angle_quality)
     {
         OcTreeNodeGraspQuality* n = search(key);

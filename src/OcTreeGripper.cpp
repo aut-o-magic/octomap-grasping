@@ -39,14 +39,14 @@ namespace octomap
 
     // tree implementation --------------------------
 
-    OcTreeGripper::OcTreeGripper(double resolution) : OccupancyOcTreeBase<OcTreeNodeGripper>(resolution)
+    OcTreeGripper::OcTreeGripper(double resolution) : OccupancyOcTreeBase<OcTreeNodeGripper>(resolution), pointing_to_target_surface_normal{0,0,1}
     {
         OcTreeGripperMemberInit.ensureLinking();
     }
 
     ColorOcTree OcTreeGripper::toColorOcTree() const
     {
-        ColorOcTree color_tree{this->getResolution()};
+        ColorOcTree color_tree{this->getResolution()};  
 
         // Copy tree occupancy contents and convert grasping surface flag to Red/Green
         for(OcTreeGripper::leaf_iterator it = this->begin_leafs(), end=this->end_leafs(); it!= end; ++it)
@@ -66,6 +66,21 @@ namespace octomap
     OcTreeGripper::operator ColorOcTree () const
     {
         return this->toColorOcTree();
+    }
+
+    void OcTreeGripper::importOcTree(const OcTree& octree_in)
+    {
+        this->clear();
+        this->setResolution(octree_in.getResolution());  
+
+        // Copy tree occupancy contents and convert grasping surface flag to Red/Green
+        for(OcTree::leaf_iterator it = octree_in.begin_leafs(), end=octree_in.end_leafs(); it!= end; ++it)
+        {
+            // cannot use node key as it is only valid for the previous node
+            point3d node_point = it.getCoordinate();
+            this->updateNode(node_point, true, true);
+        }
+        this->updateInnerOccupancy();
     }
 
     OcTreeNodeGripper* OcTreeGripper::setNodeIsGraspingSurface(const OcTreeKey& key, bool grasping_surface_flag)
@@ -120,6 +135,16 @@ namespace octomap
 
     void OcTreeGripper::updateInnerOccupancy() {
         this->updateInnerOccupancyRecurs(this->root, 0);
+    }
+
+    void OcTreeGripper::setGripperOrientation(Eigen::Vector3f& vector)
+    {
+        this->pointing_to_target_surface_normal = vector;
+    }
+
+    Eigen::Vector3f OcTreeGripper::getGripperOrientation() const
+    {
+        return this->pointing_to_target_surface_normal;
     }
 
     void OcTreeGripper::updateInnerOccupancyRecurs(OcTreeNodeGripper* node, unsigned int depth) {
