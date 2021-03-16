@@ -1,0 +1,12 @@
+@PACKAGE_INIT@
+include(CMakeFindDependencyMacro)
+
+# Set variables
+set(octomap_grasping_LIBRARIES @octomap_grasping_LIBRARIES@)
+set(octomap_grasping_INCLUDE_DIRS @octomap_grasping_INCLUDE_DIRS@)
+
+# All REQUIRED dependencies listed below
+find_dependency(octomap)
+
+# Allow downstreams to use IMPORTED targets
+include ( "${CMAKE_CURRENT_LIST_DIR}/octomap_graspingTargets.cmake" )

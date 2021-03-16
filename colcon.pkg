@@ -1,0 +1,3 @@
+name: octomap_grasping
+type: cmake
+dependencies: [octomap]

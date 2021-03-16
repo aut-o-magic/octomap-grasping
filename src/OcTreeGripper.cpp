@@ -3,29 +3,29 @@
 namespace octomap
 {
     // node implementation -----------------------------
-    std::ostream& OcTreeNodeGripper::writeData(std::ostream &s) const
+    std::ostream& OcTreeGripperNode::writeData(std::ostream &s) const
     {
         s.write((const char*) &value, sizeof(value)); // occupancy
         s.write((const char*) &is_grasping_surface, sizeof(is_grasping_surface)); // grasping surface flag
         return s;
     }
 
-    std::istream& OcTreeNodeGripper::readData(std::istream &s)
+    std::istream& OcTreeGripperNode::readData(std::istream &s)
     {
         s.read((char*) &value, sizeof(value)); // occupancy
         s.read((char*) &is_grasping_surface, sizeof(is_grasping_surface)); // grasping surface flag
         return s;
     }
 
-    void OcTreeNodeGripper::updateIsGraspingSurfaceChildren() {
+    void OcTreeGripperNode::updateIsGraspingSurfaceChildren() {
         this->is_grasping_surface = getAverageChildIsGraspingSurface();
     }
 
-    bool OcTreeNodeGripper::getAverageChildIsGraspingSurface() const {
+    bool OcTreeGripperNode::getAverageChildIsGraspingSurface() const {
         int c = 0;
         if (children != NULL){
             for (int i=0; i<8; i++) {
-                OcTreeNodeGripper* child = static_cast<OcTreeNodeGripper*>(children[i]);
+                OcTreeGripperNode* child = static_cast<OcTreeGripperNode*>(children[i]);
                 if (child != NULL) 
                 {
                     if (child->isGraspingSurface()) ++c;
@@ -39,7 +39,7 @@ namespace octomap
 
     // tree implementation --------------------------
 
-    OcTreeGripper::OcTreeGripper(double resolution) : OccupancyOcTreeBase<OcTreeNodeGripper>(resolution), pointing_to_target_surface_normal{0,0,1}
+    OcTreeGripper::OcTreeGripper(double resolution) : OccupancyOcTreeBase<OcTreeGripperNode>(resolution), pointing_to_target_surface_normal{0,0,1}
     {
         OcTreeGripperMemberInit.ensureLinking();
     }
@@ -83,9 +83,9 @@ namespace octomap
         this->updateInnerOccupancy();
     }
 
-    OcTreeNodeGripper* OcTreeGripper::setNodeIsGraspingSurface(const OcTreeKey& key, bool grasping_surface_flag)
+    OcTreeGripperNode* OcTreeGripper::setNodeIsGraspingSurface(const OcTreeKey& key, bool grasping_surface_flag)
     {
-        OcTreeNodeGripper* n = search(key);
+        OcTreeGripperNode* n = search(key);
         if (n!=0)
         {
             n->setIsGraspingSurface(grasping_surface_flag);
@@ -93,7 +93,7 @@ namespace octomap
         return n;
     }
 
-    bool OcTreeGripper::pruneNode(OcTreeNodeGripper* node)
+    bool OcTreeGripper::pruneNode(OcTreeGripperNode* node)
     {
         if (!isNodeCollapsible(node)) return false;
 
@@ -113,14 +113,14 @@ namespace octomap
         return true;
     }
 
-    bool OcTreeGripper::isNodeCollapsible(const OcTreeNodeGripper* node) const
+    bool OcTreeGripper::isNodeCollapsible(const OcTreeGripperNode* node) const
     {
         // all children must exist, must not have children of
         // their own and have the same occupancy probability
         if (!nodeChildExists(node, 0))
         return false;
 
-        const OcTreeNodeGripper* firstChild = getNodeChild(node, 0);
+        const OcTreeGripperNode* firstChild = getNodeChild(node, 0);
         if (nodeHasChildren(firstChild))
         return false;
 
@@ -147,7 +147,7 @@ namespace octomap
         return this->pointing_to_target_surface_normal;
     }
 
-    void OcTreeGripper::updateInnerOccupancyRecurs(OcTreeNodeGripper* node, unsigned int depth) {
+    void OcTreeGripper::updateInnerOccupancyRecurs(OcTreeGripperNode* node, unsigned int depth) {
         // only recurse and update for inner nodes:
         if (nodeHasChildren(node)){
             // return early for last level:

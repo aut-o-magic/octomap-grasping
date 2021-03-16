@@ -12,7 +12,7 @@
 
 namespace octomap
 {
-  class OcTreeNodeGraspQuality : public OcTreeNode
+  class OcTreeGraspQualityNode : public OcTreeNode
   {
     public:
     friend class OcTreeGraspQuality; // needs access to node children with protected status
@@ -45,23 +45,23 @@ namespace octomap
       Eigen::Matrix<float, 2, ORIENTATION_STEPS> angle_quality; // orientation of the gripper and numeric grasp quality
     };
 
-    OcTreeNodeGraspQuality() : OcTreeNode(), grasp_quality{} {}
+    OcTreeGraspQualityNode() : OcTreeNode(), grasp_quality{} {}
 
-    OcTreeNodeGraspQuality(const OcTreeNodeGraspQuality& rhs) : OcTreeNode(rhs), grasp_quality{rhs.grasp_quality} {}
+    OcTreeGraspQualityNode(const OcTreeGraspQualityNode& rhs) : OcTreeNode(rhs), grasp_quality{rhs.grasp_quality} {}
 
     /* UNNECESSARY
-    bool operator=(const OcTreeNodeGraspQuality& rhs)
+    bool operator=(const OcTreeGraspQualityNode& rhs)
     {
       grasp_quality = rhs.grasp_quality;
       return (value = rhs.value);
     }*/
 
-    bool operator==(const OcTreeNodeGraspQuality& rhs) const
+    bool operator==(const OcTreeGraspQualityNode& rhs) const
     {
       return (rhs.value == value && rhs.grasp_quality == grasp_quality);
     }
 
-    void copyData(const OcTreeNodeGraspQuality& from)
+    void copyData(const OcTreeGraspQualityNode& from)
     {
       OcTreeNode::copyData(from);
       this->grasp_quality = from.getGraspQuality();
@@ -78,7 +78,7 @@ namespace octomap
 
     void updateGraspQualityChildren();
 
-    OcTreeNodeGraspQuality::GraspQuality getAverageChildGraspQuality() const;
+    OcTreeGraspQualityNode::GraspQuality getAverageChildGraspQuality() const;
 
     /**
      * @brief Check if GraspQuality properties of voxel have been populated with real data
@@ -89,7 +89,7 @@ namespace octomap
       return grasp_quality.angle_quality.row(1).isZero();
     }
 
-    virtual ~OcTreeNodeGraspQuality() {};
+    virtual ~OcTreeGraspQualityNode() {};
 
     // file I/O
     std::istream& readData(std::istream &s);
@@ -99,7 +99,7 @@ namespace octomap
       GraspQuality grasp_quality;
   };
 
-  class OcTreeGraspQuality : public OccupancyOcTreeBase <OcTreeNodeGraspQuality>
+  class OcTreeGraspQuality : public OccupancyOcTreeBase <OcTreeGraspQualityNode>
   {
     public:
     OcTreeGraspQuality(double resolution);
@@ -108,14 +108,23 @@ namespace octomap
 
     std::string getTreeType() const {return "OcTreeGraspQuality";}
 
-    bool operator=(const OcTreeGraspQuality& rhs)
+    // Copy assignment operator
+    OcTreeGraspQuality& operator=(const OcTreeGraspQuality& rhs)
     {
+      // Guard self assignment
+      if (this == &rhs)
+        return *this;
+
       *this = rhs;
+      return *this;
     }
 
+    /**
+     * Custom conversion function with color coding for grasp quality
+     * ? Set this to PRIVATE and only expose the conversion operator, or entirely refactor into only the operator existing
+     */
     ColorOcTree toColorOcTree() const;
 
-    // Custom conversion function with color coding for grasp quality
     operator ColorOcTree() const;
 
     void importOcTree(const OcTree&);
@@ -126,20 +135,20 @@ namespace octomap
      * different grasp qualities of child nodes are ignored.
      * @return true if pruning was successful
      */
-    virtual bool pruneNode(OcTreeNodeGraspQuality* node);
+    virtual bool pruneNode(OcTreeGraspQualityNode* node);
 
-    virtual bool isNodeCollapsible(const OcTreeNodeGraspQuality* node) const;
+    virtual bool isNodeCollapsible(const OcTreeGraspQualityNode* node) const;
 
-    OcTreeNodeGraspQuality* setNodeGraspQuality(const OcTreeKey& key, Eigen::Vector3f& _normal, Eigen::Matrix<float, 2, ORIENTATION_STEPS>& _angle_quality);
+    OcTreeGraspQualityNode* setNodeGraspQuality(const OcTreeKey& key, Eigen::Vector3f& _normal, Eigen::Matrix<float, 2, ORIENTATION_STEPS>& _angle_quality);
 
-    OcTreeNodeGraspQuality* setNodeGraspQuality(const point3d& octo_point3d, Eigen::Vector3f& _normal, Eigen::Matrix<float, 2, ORIENTATION_STEPS>& _angle_quality)
+    OcTreeGraspQualityNode* setNodeGraspQuality(const point3d& octo_point3d, Eigen::Vector3f& _normal, Eigen::Matrix<float, 2, ORIENTATION_STEPS>& _angle_quality)
     {
       OcTreeKey key;
       if (!this->coordToKeyChecked(octo_point3d, key)) return NULL;
       return setNodeGraspQuality(key,_normal, _angle_quality);
     }
 
-    OcTreeNodeGraspQuality* setNodeGraspQuality(float x, float y, float z, Eigen::Vector3f& _normal, Eigen::Matrix<float, 2, ORIENTATION_STEPS>& _angle_quality)
+    OcTreeGraspQualityNode* setNodeGraspQuality(float x, float y, float z, Eigen::Vector3f& _normal, Eigen::Matrix<float, 2, ORIENTATION_STEPS>& _angle_quality)
     {
       OcTreeKey key;
       if (!this->coordToKeyChecked(point3d(x,y,z), key)) return NULL;
@@ -157,7 +166,7 @@ namespace octomap
     virtual ~OcTreeGraspQuality() {};
     
     protected:
-    void updateInnerOccupancyRecurs(OcTreeNodeGraspQuality* node, unsigned int depth);
+    void updateInnerOccupancyRecurs(OcTreeGraspQualityNode* node, unsigned int depth);
 
     /**
      * Static member object which ensures that this OcTree's prototype
@@ -185,8 +194,12 @@ namespace octomap
     static StaticMemberInitializer ocTreeGraspQualityMemberInit;
   };
 
-  //! user friendly output in format (r g b)
-  std::ostream& operator<<(std::ostream& out, OcTreeNodeGraspQuality::GraspQuality const& gq); // FIXME definitely doesnt work well
+  /**
+   * User friendly stream output
+   * * RGB Format
+   * ! BROKEN
+   */  
+  std::ostream& operator<<(std::ostream& out, OcTreeGraspQualityNode::GraspQuality const& gq);
 
 }  // namespace octomap
 

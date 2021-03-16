@@ -10,28 +10,28 @@
 
 namespace octomap
 {
-  class OcTreeNodeGripper : public OcTreeNode
+  class OcTreeGripperNode : public OcTreeNode
   {
     public:
     friend class OcTreeGripper; // needs access to node children with protected status
 
-    OcTreeNodeGripper() : OcTreeNode(), is_grasping_surface{false} {}
+    OcTreeGripperNode() : OcTreeNode(), is_grasping_surface{false} {}
 
-    OcTreeNodeGripper(const OcTreeNodeGripper& rhs) : OcTreeNode(rhs), is_grasping_surface{rhs.is_grasping_surface} {}
+    OcTreeGripperNode(const OcTreeGripperNode& rhs) : OcTreeNode(rhs), is_grasping_surface{rhs.is_grasping_surface} {}
 
     /* UNNECESSARY
-    bool operator=(const OcTreeNodeGripper& rhs)
+    bool operator=(const OcTreeGripperNode& rhs)
     {
       is_grasping_surface = rhs.is_grasping_surface;
       return (value = rhs.value);
     }*/
 
-    bool operator==(const OcTreeNodeGripper& rhs) const
+    bool operator==(const OcTreeGripperNode& rhs) const
     {
       return (rhs.value == value && rhs.is_grasping_surface == is_grasping_surface);
     }
 
-    void copyData(const OcTreeNodeGripper& from)
+    void copyData(const OcTreeGripperNode& from)
     {
       OcTreeNode::copyData(from);
       this->is_grasping_surface = from.isGraspingSurface();
@@ -45,7 +45,7 @@ namespace octomap
 
     bool getAverageChildIsGraspingSurface() const;
 
-    virtual ~OcTreeNodeGripper() {};
+    virtual ~OcTreeGripperNode() {};
 
     // file I/O
     std::istream& readData(std::istream &s);
@@ -55,7 +55,7 @@ namespace octomap
       bool is_grasping_surface; // Flag that dictates is the voxel is part of the grasping surface of the gripper or it is an obstacle
   };
 
-  class OcTreeGripper : public OccupancyOcTreeBase <OcTreeNodeGripper>
+  class OcTreeGripper : public OccupancyOcTreeBase <OcTreeGripperNode>
   {
     public:
     OcTreeGripper(double resolution);
@@ -66,10 +66,15 @@ namespace octomap
 
     ColorOcTree toColorOcTree() const;
 
-    // TODO fix
-    bool operator=(const OcTreeGripper& rhs)
+    // Copy assignment operator
+    OcTreeGripper& operator=(const OcTreeGripper& rhs)
     {
-      return(*this = rhs);
+      // Guard self assignment
+      if (this == &rhs)
+        return *this;
+
+      *this = rhs;
+      return *this;
     }
 
 
@@ -85,20 +90,20 @@ namespace octomap
      * different grasp qualities of child nodes are ignored.
      * @return true if pruning was successful
      */
-    virtual bool pruneNode(OcTreeNodeGripper* node);
+    virtual bool pruneNode(OcTreeGripperNode* node);
 
-    virtual bool isNodeCollapsible(const OcTreeNodeGripper* node) const;
+    virtual bool isNodeCollapsible(const OcTreeGripperNode* node) const;
 
-    OcTreeNodeGripper* setNodeIsGraspingSurface(const OcTreeKey& key, bool grasping_surface_flag);
+    OcTreeGripperNode* setNodeIsGraspingSurface(const OcTreeKey& key, bool grasping_surface_flag);
 
-    OcTreeNodeGripper* setNodeIsGraspingSurface(const point3d& octo_point3d, bool grasping_surface_flag)
+    OcTreeGripperNode* setNodeIsGraspingSurface(const point3d& octo_point3d, bool grasping_surface_flag)
     {
       OcTreeKey key;
       if (!this->coordToKeyChecked(octo_point3d, key)) return NULL;
       return setNodeIsGraspingSurface(key, grasping_surface_flag);
     }
 
-    OcTreeNodeGripper* setNodeIsGraspingSurface(float x, float y, float z, bool grasping_surface_flag)
+    OcTreeGripperNode* setNodeIsGraspingSurface(float x, float y, float z, bool grasping_surface_flag)
     {
       OcTreeKey key;
       if (!this->coordToKeyChecked(point3d(x,y,z), key)) return NULL;
@@ -119,7 +124,7 @@ namespace octomap
     protected:
     Eigen::Vector3f pointing_to_target_surface_normal; // Gripper orientation
 
-    void updateInnerOccupancyRecurs(OcTreeNodeGripper* node, unsigned int depth);
+    void updateInnerOccupancyRecurs(OcTreeGripperNode* node, unsigned int depth);
 
     /**
      * Static member object which ensures that this OcTree's prototype
@@ -147,8 +152,12 @@ namespace octomap
     static StaticMemberInitializer OcTreeGripperMemberInit;
   };
 
-  //! user friendly output in format
-  std::ostream& operator<<(std::ostream& out, bool const& grasping_surface_flag); // TODO Implement
+  /**
+   * User friendly stream output
+   * * red-green format
+   * TODO Still needs to be implemented
+   */  
+  std::ostream& operator<<(std::ostream& out, bool const& grasping_surface_flag);
 
 }  // namespace octomap
 

@@ -3,32 +3,32 @@
 namespace octomap
 {
     // node implementation -----------------------------
-    std::ostream& OcTreeNodeGraspQuality::writeData(std::ostream &s) const
+    std::ostream& OcTreeGraspQualityNode::writeData(std::ostream &s) const
     {
         s.write((const char*) &value, sizeof(value)); // occupancy
         s.write((const char*) &grasp_quality, sizeof(grasp_quality)); // grasp quality
         return s;
     }
 
-    std::istream& OcTreeNodeGraspQuality::readData(std::istream &s)
+    std::istream& OcTreeGraspQualityNode::readData(std::istream &s)
     {
         s.read((char*) &value, sizeof(value)); // occupancy
         s.read((char*) &grasp_quality, sizeof(grasp_quality)); // grasp quality
         return s;
     }
 
-    void OcTreeNodeGraspQuality::updateGraspQualityChildren() {
+    void OcTreeGraspQualityNode::updateGraspQualityChildren() {
         grasp_quality = getAverageChildGraspQuality();
     }
 
-    OcTreeNodeGraspQuality::GraspQuality OcTreeNodeGraspQuality::getAverageChildGraspQuality() const {
+    OcTreeGraspQualityNode::GraspQuality OcTreeGraspQualityNode::getAverageChildGraspQuality() const {
         Eigen::Vector3f normal;
         Eigen::Matrix<float, 2, ORIENTATION_STEPS> angle_quality; // orientation of the gripper and numeric grasp quality
         int c = 0;
         
         if (children != NULL){
             for (int i=0; i<8; i++) {
-                OcTreeNodeGraspQuality* child = static_cast<OcTreeNodeGraspQuality*>(children[i]);
+                OcTreeGraspQualityNode* child = static_cast<OcTreeGraspQualityNode*>(children[i]);
 
                 if (child != NULL && child->isGraspQualitySet()) {
                     normal += child->getGraspQuality().normal;
@@ -41,17 +41,17 @@ namespace octomap
         if (c > 0) {
             normal /= c;
             angle_quality /= c;
-            return OcTreeNodeGraspQuality::GraspQuality(normal, angle_quality);
+            return OcTreeGraspQualityNode::GraspQuality(normal, angle_quality);
         }
         else { // no child had a set grasp quality
-            return OcTreeNodeGraspQuality::GraspQuality();
+            return OcTreeGraspQualityNode::GraspQuality();
         }
     }
 
 
     // tree implementation --------------------------
 
-    OcTreeGraspQuality::OcTreeGraspQuality(double resolution) : OccupancyOcTreeBase<OcTreeNodeGraspQuality>(resolution)
+    OcTreeGraspQuality::OcTreeGraspQuality(double resolution) : OccupancyOcTreeBase<OcTreeGraspQualityNode>(resolution)
     {
         ocTreeGraspQualityMemberInit.ensureLinking();
     }
@@ -88,7 +88,7 @@ namespace octomap
         this->clear();
         this->setResolution(octree_in.getResolution());  
 
-        // Copy tree occupancy contents and convert grasping surface flag to Red/Green
+        // Copy tree occupancy contents
         for(OcTree::leaf_iterator it = octree_in.begin_leafs(), end=octree_in.end_leafs(); it!= end; ++it)
         {
             // cannot use node key as it is only valid for the previous node
@@ -98,9 +98,9 @@ namespace octomap
         this->updateInnerOccupancy();
     }
 
-    OcTreeNodeGraspQuality* OcTreeGraspQuality::setNodeGraspQuality(const OcTreeKey& key, Eigen::Vector3f& _normal, Eigen::Matrix<float, 2, ORIENTATION_STEPS>& _angle_quality)
+    OcTreeGraspQualityNode* OcTreeGraspQuality::setNodeGraspQuality(const OcTreeKey& key, Eigen::Vector3f& _normal, Eigen::Matrix<float, 2, ORIENTATION_STEPS>& _angle_quality)
     {
-        OcTreeNodeGraspQuality* n = search(key);
+        OcTreeGraspQualityNode* n = search(key);
         if (n!=0)
         {
             n->setGraspQuality(_normal, _angle_quality);
@@ -108,7 +108,7 @@ namespace octomap
         return n;
     }
 
-    bool OcTreeGraspQuality::pruneNode(OcTreeNodeGraspQuality* node)
+    bool OcTreeGraspQuality::pruneNode(OcTreeGraspQualityNode* node)
     {
         if (!isNodeCollapsible(node)) return false;
 
@@ -129,14 +129,14 @@ namespace octomap
         return true;
     }
 
-    bool OcTreeGraspQuality::isNodeCollapsible(const OcTreeNodeGraspQuality* node) const
+    bool OcTreeGraspQuality::isNodeCollapsible(const OcTreeGraspQualityNode* node) const
     {
         // all children must exist, must not have children of
         // their own and have the same occupancy probability
         if (!nodeChildExists(node, 0))
         return false;
 
-        const OcTreeNodeGraspQuality* firstChild = getNodeChild(node, 0);
+        const OcTreeGraspQualityNode* firstChild = getNodeChild(node, 0);
         if (nodeHasChildren(firstChild))
         return false;
 
@@ -199,7 +199,7 @@ namespace octomap
         this->updateInnerOccupancyRecurs(this->root, 0);
     }
 
-    void OcTreeGraspQuality::updateInnerOccupancyRecurs(OcTreeNodeGraspQuality* node, unsigned int depth) {
+    void OcTreeGraspQuality::updateInnerOccupancyRecurs(OcTreeGraspQualityNode* node, unsigned int depth) {
         // only recurse and update for inner nodes:
         if (nodeHasChildren(node)){
             // return early for last level:

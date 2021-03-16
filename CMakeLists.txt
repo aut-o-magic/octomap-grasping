@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.5)
-project(octomap_grasping)
+project(octomap_grasping VERSION 1.0)
+
+# Set VERSION
+set(OCTOMAP_GRASPING_VERSION 1.0.0)
 
 # Default to C99
 if(NOT CMAKE_C_STANDARD)
@@ -15,60 +18,82 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-# find dependencies
-find_package(ament_cmake REQUIRED)
-#find_package(ament_cmake_ros REQUIRED)
-
 # Octomap imports
 find_package(octomap REQUIRED)
-find_package(octomap_msgs REQUIRED)
 include_directories(${OCTOMAP_INCLUDE_DIRS})
 
-add_library(OcTreeGraspQuality src/OcTreeGraspQuality.cpp)
-target_include_directories(OcTreeGraspQuality PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
+# CMake variables
+list(APPEND ${PROJECT_NAME}_LIBRARIES ${OCTOMAP_LIBRARIES})
+list(APPEND ${PROJECT_NAME}_INCLUDE_DIRS ${OCTOMAP_INCLUDE_DIRS})
 
-add_library(OcTreeGripper src/OcTreeGripper.cpp)
-target_include_directories(OcTreeGripper PUBLIC
+# Create library 1
+set(LIB_GQ OcTreeGraspQuality)
+
+add_library(${LIB_GQ} src/OcTreeGraspQuality.cpp)
+target_include_directories(${LIB_GQ} PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<INSTALL_INTERFACE:include>)
+  $<INSTALL_INTERFACE:include>
+)
+
+set_property(TARGET ${LIB_GQ} PROPERTY VERSION ${OCTOMAP_GRASPING_VERSION})
+
+# Create library 2
+set(LIB_GRIPPER OcTreeGripper)
+
+add_library(${LIB_GRIPPER} src/OcTreeGripper.cpp)
+target_include_directories(${LIB_GRIPPER} PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<INSTALL_INTERFACE:include>
+)
+
+set_property(TARGET ${LIB_GRIPPER} PROPERTY VERSION ${OCTOMAP_GRASPING_VERSION})
 
 # Causes the visibility macros to use dllexport rather than dllimport,
 # which is appropriate when building the dll but not consuming it.
-target_compile_definitions(OcTreeGraspQuality PRIVATE "OCTOMAP_GRASPING_BUILDING_LIBRARY")
+#target_compile_definitions(${LIB_NAME} PRIVATE "OCTOMAP_GRASPING_BUILDING_LIBRARY")
 
+install(
+  TARGETS ${LIB_GQ} ${LIB_GRIPPER}
+  EXPORT ${PROJECT_NAME}Targets
+  ARCHIVE DESTINATION lib
+  #LIBRARY DESTINATION lib
+  #RUNTIME DESTINATION bin
+  #INCLUDES DESTINATION include
+)
+
+# add self cmake variables
+list(APPEND ${PROJECT_NAME}_LIBRARIES ${PROJECT_NAME}::${LIB_GQ} ${PROJECT_NAME}::${LIB_GRIPPER}) # Would probably be better to use absolute path, not namespaced variables...
+list(APPEND ${PROJECT_NAME}_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/include")
+
+# Install header files
 install(
   DIRECTORY include/
   DESTINATION include
 )
+
+set(ConfigPackageLocation lib/cmake/${PROJECT_NAME})
+# Explicitly install the auto-generated .cmake file from the targets install command
+install(EXPORT ${PROJECT_NAME}Targets
+  FILE ${PROJECT_NAME}Targets.cmake
+  NAMESPACE ${PROJECT_NAME}::
+  DESTINATION ${ConfigPackageLocation}
+)
+
+include(CMakePackageConfigHelpers)
+configure_package_config_file(
+  "Config.cmake.in"
+  "${PROJECT_NAME}Config.cmake"
+  INSTALL_DESTINATION ${ConfigPackageLocation}
+)
+
+write_basic_package_version_file(
+  "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+  VERSION ${OCTOMAP_GRASPING_VERSION}
+  COMPATIBILITY AnyNewerVersion
+)
+
+# Install Config and ConfigVersion files
 install(
-  TARGETS OcTreeGraspQuality OcTreeGripper
-  EXPORT export_${PROJECT_NAME}
-  ARCHIVE DESTINATION lib
-  LIBRARY DESTINATION lib
-  RUNTIME DESTINATION bin
+  FILES "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake" "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+  DESTINATION ${ConfigPackageLocation}
 )
-
-if(BUILD_TESTING)
-  find_package(ament_lint_auto REQUIRED)
-  # the following line skips the linter which checks for copyrights
-  # uncomment the line when a copyright and license is not present in all source files
-  #set(ament_cmake_copyright_FOUND TRUE)
-  # the following line skips cpplint (only works in a git repo)
-  # uncomment the line when this package is not in a git repo
-  #set(ament_cmake_cpplint_FOUND TRUE)
-  ament_lint_auto_find_test_dependencies()
-endif()
-
-ament_export_include_directories(
-  include
-)
-ament_export_libraries(
-  OcTreeGraspQuality OcTreeGripper
-)
-ament_export_targets(
-  export_${PROJECT_NAME}
-)
-
-ament_package()
