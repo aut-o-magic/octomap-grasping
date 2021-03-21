@@ -56,6 +56,7 @@ namespace octomap
         ocTreeGraspQualityMemberInit.ensureLinking();
     }
 
+    // TODO Update this method with new algorithm
     ColorOcTree OcTreeGraspQuality::toColorOcTree() const
     {
         ColorOcTree color_tree{this->getResolution()};
@@ -83,6 +84,7 @@ namespace octomap
         return this->toColorOcTree();
     }
 
+    // TODO Update this method with new algorithm
     void OcTreeGraspQuality::importOcTree(const OcTree& octree_in)
     {
         this->clear();

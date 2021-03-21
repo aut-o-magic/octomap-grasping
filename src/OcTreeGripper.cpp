@@ -44,6 +44,7 @@ namespace octomap
         OcTreeGripperMemberInit.ensureLinking();
     }
 
+    // TODO Update this method with new algorithm
     ColorOcTree OcTreeGripper::toColorOcTree() const
     {
         ColorOcTree color_tree{this->getResolution()};  
@@ -55,10 +56,10 @@ namespace octomap
             point3d node_point = it.getCoordinate();
             color_tree.updateNode(node_point, true, true);
 
-            if (it->isGraspingSurface()) color_tree.setNodeColor(node_point.x(), node_point.y(), node_point.z(), 0, 255, 0);
-            else color_tree.setNodeColor(node_point.x(), node_point.y(), node_point.z(), 255, 0, 0);
+            if (it->isGraspingSurface()) color_tree.setNodeColor(node_point.x(), node_point.y(), node_point.z(), 0, 255, 0); // GREEN
+            else color_tree.setNodeColor(node_point.x(), node_point.y(), node_point.z(), 255, 0, 0); // RED
         }
-        color_tree.updateInnerOccupancy();        
+        color_tree.updateInnerOccupancy();
         //color_tree.writeColorHistogram("colorhistogram");
         return color_tree;
     }
@@ -67,7 +68,8 @@ namespace octomap
     {
         return this->toColorOcTree();
     }
-
+    
+    // TODO Update this method with new algorithm
     void OcTreeGripper::importOcTree(const OcTree& octree_in)
     {
         this->clear();
@@ -86,7 +88,7 @@ namespace octomap
     OcTreeGripperNode* OcTreeGripper::setNodeIsGraspingSurface(const OcTreeKey& key, bool grasping_surface_flag)
     {
         OcTreeGripperNode* n = search(key);
-        if (n!=0)
+        if (!n)
         {
             n->setIsGraspingSurface(grasping_surface_flag);
         }
