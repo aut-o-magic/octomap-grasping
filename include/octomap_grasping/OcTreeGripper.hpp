@@ -37,7 +37,7 @@ namespace octomap
       this->is_grasping_surface = from.isGraspingSurface();
     }
 
-    inline bool isGraspingSurface() const {return is_grasping_surface;}
+    inline bool isGraspingSurface() const {return this->is_grasping_surface;}
 
     inline void setIsGraspingSurface(bool grasping_surface_flag) {this->is_grasping_surface = grasping_surface_flag;}
 
