@@ -56,26 +56,29 @@ namespace octomap
         ocTreeGraspQualityMemberInit.ensureLinking();
     }
 
-    // TODO Update this method with new algorithm
     ColorOcTree OcTreeGraspQuality::toColorOcTree() const
     {
         ColorOcTree color_tree{this->getResolution()};
 
+        //OcTreeGraspQuality temp_octree(*(this));
+        OcTreeGraspQuality* temp_octree = new OcTreeGraspQuality(*this);
+        temp_octree->expand();
+
         // Copy tree occupancy contents and convert GQ to color scale
-        for(OcTreeGraspQuality::leaf_iterator it = this->begin_leafs(), end=this->end_leafs(); it!= end; ++it)
+        for(OcTreeGraspQuality::leaf_iterator it = temp_octree->begin_leafs(), end=temp_octree->end_leafs(); it!= end; ++it)
         {
             // cannot use node key as it is only valid for the previous node
             point3d node_point = it.getCoordinate();
-            color_tree.updateNode(node_point, true, true);
+            ColorOcTreeNode* n = color_tree.updateNode(node_point, true); // nodes auto-prune
 
             // convert GQ to Red-Green color scale
             float max_gq = it->getGraspQuality().angle_quality.row(1).maxCoeff();
             uint16_t rg = max_gq*512;
             uint8_t r = std::max(255-rg,0);
             uint8_t g = std::max(rg-256,0);
-            color_tree.setNodeColor(node_point.x(), node_point.y(), node_point.z(), r, g, 0);
+            n->setColor(r, g, 0);
         }
-        color_tree.updateInnerOccupancy();
+        delete temp_octree;
         return color_tree;
     }
     
@@ -84,26 +87,35 @@ namespace octomap
         return this->toColorOcTree();
     }
 
-    // TODO Update this method with new algorithm
-    void OcTreeGraspQuality::importOcTree(const OcTree& octree_in)
+    void OcTreeGraspQuality::importOcTree(OcTree octree_in)
     {
-        this->clear();
-        this->setResolution(octree_in.getResolution());  
+        // ! debug variables, no need to disable as their overhead is negligible
+        unsigned int max_depth{0};
+        unsigned int min_depth{16};
+ 
+        octree_in.expand(); // expand all nodes to have all leafs at the highest depth
 
+        this->clear(); // must delete all data as resetting resolution would void metric scale
+        this->setResolution(octree_in.getResolution());
         // Copy tree occupancy contents
         for(OcTree::leaf_iterator it = octree_in.begin_leafs(), end=octree_in.end_leafs(); it!= end; ++it)
         {
             // cannot use node key as it is only valid for the previous node
             point3d node_point = it.getCoordinate();
-            this->updateNode(node_point, true, true);
+
+            unsigned int depth_node{it.getDepth()};
+            if (depth_node > max_depth) max_depth = depth_node;
+            if (depth_node < min_depth) min_depth = depth_node;
+
+            this->updateNode(node_point, true);
         }
-        this->updateInnerOccupancy();
+        //std::cout << "max_depth=" << max_depth << std::endl << "min_depth=" << min_depth <<std::endl; // ! debug print
     }
 
     OcTreeGraspQualityNode* OcTreeGraspQuality::setNodeGraspQuality(const OcTreeKey& key, Eigen::Vector3f& _normal, Eigen::Matrix<float, 2, ORIENTATION_STEPS>& _angle_quality)
     {
         OcTreeGraspQualityNode* n = search(key);
-        if (n!=0)
+        if (n) // if not null
         {
             n->setGraspQuality(_normal, _angle_quality);
         }

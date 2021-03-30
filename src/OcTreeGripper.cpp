@@ -44,23 +44,25 @@ namespace octomap
         OcTreeGripperMemberInit.ensureLinking();
     }
 
-    // TODO Update this method with new algorithm
     ColorOcTree OcTreeGripper::toColorOcTree() const
     {
-        ColorOcTree color_tree{this->getResolution()};  
+        ColorOcTree color_tree{this->getResolution()};
+
+        OcTreeGripper* temp_octree = new OcTreeGripper(*this);
+        temp_octree->expand();
 
         // Copy tree occupancy contents and convert grasping surface flag to Red/Green
-        for(OcTreeGripper::leaf_iterator it = this->begin_leafs(), end=this->end_leafs(); it!= end; ++it)
+        for(OcTreeGripper::leaf_iterator it = temp_octree->begin_leafs(), end=temp_octree->end_leafs(); it!= end; ++it)
         {
             // cannot use node key as it is only valid for the previous node
             point3d node_point = it.getCoordinate();
-            color_tree.updateNode(node_point, true, true);
+            ColorOcTreeNode* n = color_tree.updateNode(node_point, true); // nodes auto-prune
 
-            if (it->isGraspingSurface()) color_tree.setNodeColor(node_point.x(), node_point.y(), node_point.z(), 0, 255, 0); // GREEN
-            else color_tree.setNodeColor(node_point.x(), node_point.y(), node_point.z(), 255, 0, 0); // RED
+            if (it->isGraspingSurface()) n->setColor(0, 255, 0); // GREEN
+            else n->setColor(255, 0, 0); // RED
         }
-        color_tree.updateInnerOccupancy();
         //color_tree.writeColorHistogram("colorhistogram");
+        delete temp_octree;
         return color_tree;
     }
     
@@ -69,20 +71,29 @@ namespace octomap
         return this->toColorOcTree();
     }
     
-    // TODO Update this method with new algorithm
-    void OcTreeGripper::importOcTree(const OcTree& octree_in)
+    void OcTreeGripper::importOcTree(OcTree octree_in)
     {
-        this->clear();
-        this->setResolution(octree_in.getResolution());  
+        // ! debug variables, no need to disable as their overhead is negligible
+        unsigned int max_depth{0};
+        unsigned int min_depth{16};
+ 
+        octree_in.expand(); // expand all nodes to have all leafs at the highest depth
 
-        // Copy tree occupancy contents and convert grasping surface flag to Red/Green
+        this->clear(); // must delete all data as resetting resolution would void metric scale
+        this->setResolution(octree_in.getResolution());
+        // Copy tree occupancy contents
         for(OcTree::leaf_iterator it = octree_in.begin_leafs(), end=octree_in.end_leafs(); it!= end; ++it)
         {
             // cannot use node key as it is only valid for the previous node
             point3d node_point = it.getCoordinate();
-            this->updateNode(node_point, true, true);
+
+            unsigned int depth_node{it.getDepth()};
+            if (depth_node > max_depth) max_depth = depth_node;
+            if (depth_node < min_depth) min_depth = depth_node;
+
+            this->updateNode(node_point, true);
         }
-        this->updateInnerOccupancy();
+        //std::cout << "max_depth=" << max_depth << std::endl << "min_depth=" << min_depth <<std::endl; // ! debug print
     }
 
     OcTreeGripperNode* OcTreeGripper::setNodeIsGraspingSurface(const OcTreeKey& key, bool grasping_surface_flag)

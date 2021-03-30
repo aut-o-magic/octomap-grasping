@@ -127,7 +127,7 @@ namespace octomap
 
     operator ColorOcTree() const;
 
-    void importOcTree(const OcTree&);
+    void importOcTree(OcTree); // TODO Fix function signature to pass by const reference
 
     /**
      * Prunes a node when it is collapsible. This overloaded
