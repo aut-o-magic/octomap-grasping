@@ -64,8 +64,6 @@ namespace octomap
 
     std::string getTreeType() const {return "OcTreeGripper";}
 
-    ColorOcTree toColorOcTree() const;
-
     // Copy assignment operator
     OcTreeGripper& operator=(const OcTreeGripper& rhs)
     {

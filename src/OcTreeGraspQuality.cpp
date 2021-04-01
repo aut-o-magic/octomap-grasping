@@ -18,7 +18,7 @@ namespace octomap
     }
 
     void OcTreeGraspQualityNode::updateGraspQualityChildren() {
-        grasp_quality = getAverageChildGraspQuality();
+        this->grasp_quality = getAverageChildGraspQuality();
     }
 
     OcTreeGraspQualityNode::GraspQuality OcTreeGraspQualityNode::getAverageChildGraspQuality() const {
@@ -26,11 +26,11 @@ namespace octomap
         Eigen::Matrix<float, 2, ORIENTATION_STEPS> angle_quality; // orientation of the gripper and numeric grasp quality
         int c = 0;
         
-        if (children != NULL){
+        if (children){ // if not NULL
             for (int i=0; i<8; i++) {
                 OcTreeGraspQualityNode* child = static_cast<OcTreeGraspQualityNode*>(children[i]);
 
-                if (child != NULL && child->isGraspQualitySet()) {
+                if (child && child->isGraspQualitySet()) { // if child not NULL && grasp quality is meaningful
                     normal += child->getGraspQuality().normal;
                     angle_quality += child->getGraspQuality().angle_quality;
                     ++c;
@@ -41,13 +41,27 @@ namespace octomap
         if (c > 0) {
             normal /= c;
             angle_quality /= c;
-            return OcTreeGraspQualityNode::GraspQuality(normal, angle_quality);
+            return OcTreeGraspQualityNode::GraspQuality{normal, angle_quality};
         }
         else { // no child had a set grasp quality
-            return OcTreeGraspQualityNode::GraspQuality();
+            return OcTreeGraspQualityNode::GraspQuality{};
         }
     }
 
+    // ! Not used nor tested
+    OcTreeGraspQualityNode::operator ColorOcTreeNode() const
+    {
+        ColorOcTreeNode color_node{};
+        // convert GQ to Red-Green color scale
+        float max_gq = this->getGraspQuality().angle_quality.row(1).maxCoeff();
+        uint16_t rg = max_gq*512;
+        uint8_t r = std::max(255-rg,0);
+        uint8_t g = std::max(rg-256,0);
+        color_node.setColor(r, g, 0);
+        color_node.setLogOdds(this->getLogOdds());
+
+        return color_node;
+    }
 
     // tree implementation --------------------------
 
@@ -55,36 +69,37 @@ namespace octomap
     {
         ocTreeGraspQualityMemberInit.ensureLinking();
     }
-
-    ColorOcTree OcTreeGraspQuality::toColorOcTree() const
-    {
-        ColorOcTree color_tree{this->getResolution()};
-
-        //OcTreeGraspQuality temp_octree(*(this));
-        OcTreeGraspQuality* temp_octree = new OcTreeGraspQuality(*this);
-        temp_octree->expand();
-
-        // Copy tree occupancy contents and convert GQ to color scale
-        for(OcTreeGraspQuality::leaf_iterator it = temp_octree->begin_leafs(), end=temp_octree->end_leafs(); it!= end; ++it)
-        {
-            // cannot use node key as it is only valid for the previous node
-            point3d node_point = it.getCoordinate();
-            ColorOcTreeNode* n = color_tree.updateNode(node_point, true); // nodes auto-prune
-
-            // convert GQ to Red-Green color scale
-            float max_gq = it->getGraspQuality().angle_quality.row(1).maxCoeff();
-            uint16_t rg = max_gq*512;
-            uint8_t r = std::max(255-rg,0);
-            uint8_t g = std::max(rg-256,0);
-            n->setColor(r, g, 0);
-        }
-        delete temp_octree;
-        return color_tree;
-    }
     
+    // Type casting to ColorOcTree with 255 green set as perfect grasp quality and 255 red as zero grasp quality
     OcTreeGraspQuality::operator ColorOcTree () const
     {
-        return this->toColorOcTree();
+        ColorOcTree tree{this->getResolution()};
+        if (this->root) // if not NULL
+        {    
+            // temp tree as modification (tree expansion) is needed for type casting operation
+            OcTreeGraspQuality* temp_tree = new OcTreeGraspQuality(this->getResolution()); // calling delete on the raw pointer leads to seg fault, I suspect something weird with octomap's library implementation?
+            temp_tree->root = this->getRoot(); // this will recursively copy all children
+            temp_tree->expand();
+
+            // Copy tree occupancy contents and convert GQ to color scale
+            for(OcTreeGraspQuality::leaf_iterator it = temp_tree->begin_leafs(), end=temp_tree->end_leafs(); it!= end; ++it)
+            {
+                // cannot use node key as it is only valid for the previous node
+                point3d node_point = it.getCoordinate();
+                ColorOcTreeNode* n = tree.updateNode(node_point, true); // nodes auto-prune
+
+                // convert GQ to Red-Green color scale
+                float max_gq = it->getGraspQuality().angle_quality.row(1).maxCoeff();
+                uint16_t rg = max_gq*512;
+                uint8_t r = std::max(255-rg,0);
+                uint8_t g = std::max(rg-256,0);
+                n->setColor(r, g, 0);
+            }
+            tree.updateInnerOccupancy();
+        } else {
+            std::cerr << "[OcTreeGraspQuality->ColorOcTree operator] root node of original tree is NULL" << std::endl;
+        }
+        return tree;
     }
 
     void OcTreeGraspQuality::importOcTree(OcTree octree_in)
@@ -109,7 +124,8 @@ namespace octomap
 
             this->updateNode(node_point, true);
         }
-        //std::cout << "max_depth=" << max_depth << std::endl << "min_depth=" << min_depth <<std::endl; // ! debug print
+        this->updateInnerOccupancy();
+        //std::cout << "max_depth=" << max_depth << std::endl << "min_depth=" << min_depth <<std::endl; // debug print
     }
 
     OcTreeGraspQualityNode* OcTreeGraspQuality::setNodeGraspQuality(const OcTreeKey& key, Eigen::Vector3f& _normal, Eigen::Matrix<float, 2, ORIENTATION_STEPS>& _angle_quality)
@@ -172,7 +188,7 @@ namespace octomap
             std::vector<int> histogram_r (256,0);
             std::vector<int> histogram_g (256,0);
             std::vector<int> histogram_b (256,0);
-            ColorOcTree color_tree{this->toColorOcTree()};
+            ColorOcTree color_tree{*this};
             for(ColorOcTree::tree_iterator it = color_tree.begin_tree(),
                 end=color_tree.end_tree(); it!= end; ++it) {
             if (!it.isLeaf() || !color_tree.isNodeOccupied(*it)) continue;

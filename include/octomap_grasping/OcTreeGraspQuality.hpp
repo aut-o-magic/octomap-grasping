@@ -89,6 +89,8 @@ namespace octomap
       return grasp_quality.angle_quality.row(1).isZero();
     }
 
+    operator ColorOcTreeNode () const;
+
     virtual ~OcTreeGraspQualityNode() {};
 
     // file I/O
@@ -118,12 +120,6 @@ namespace octomap
       *this = rhs;
       return *this;
     }
-
-    /**
-     * Custom conversion function with color coding for grasp quality
-     * ? Set this to PRIVATE and only expose the conversion operator, or entirely refactor into only the operator existing
-     */
-    ColorOcTree toColorOcTree() const;
 
     operator ColorOcTree() const;
 

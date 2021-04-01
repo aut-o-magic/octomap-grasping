@@ -43,32 +43,33 @@ namespace octomap
     {
         OcTreeGripperMemberInit.ensureLinking();
     }
-
-    ColorOcTree OcTreeGripper::toColorOcTree() const
-    {
-        ColorOcTree color_tree{this->getResolution()};
-
-        OcTreeGripper* temp_octree = new OcTreeGripper(*this);
-        temp_octree->expand();
-
-        // Copy tree occupancy contents and convert grasping surface flag to Red/Green
-        for(OcTreeGripper::leaf_iterator it = temp_octree->begin_leafs(), end=temp_octree->end_leafs(); it!= end; ++it)
-        {
-            // cannot use node key as it is only valid for the previous node
-            point3d node_point = it.getCoordinate();
-            ColorOcTreeNode* n = color_tree.updateNode(node_point, true); // nodes auto-prune
-
-            if (it->isGraspingSurface()) n->setColor(0, 255, 0); // GREEN
-            else n->setColor(255, 0, 0); // RED
-        }
-        //color_tree.writeColorHistogram("colorhistogram");
-        delete temp_octree;
-        return color_tree;
-    }
     
+    // Type casting to ColorOcTree with 255 green set as grasping surface and 255 red as non-grasping surface
     OcTreeGripper::operator ColorOcTree () const
     {
-        return this->toColorOcTree();
+        ColorOcTree tree{this->getResolution()};
+        if (this->root) // if not NULL
+        {    
+            // temp tree as modification (tree expansion) is needed for type casting operation
+            OcTreeGripper* temp_tree{new OcTreeGripper(this->getResolution())}; // calling delete on the raw pointer leads to seg fault, I suspect something weird with octomap's library implementation?
+            temp_tree->root = this->getRoot(); // this will recursively copy all children
+            temp_tree->expand();
+
+            // Copy tree occupancy contents and convert GQ to color scale
+            for(OcTreeGripper::leaf_iterator it = temp_tree->begin_leafs(), end=temp_tree->end_leafs(); it!= end; ++it)
+            {
+                // cannot use node key as it is only valid for the previous node
+                point3d node_point = it.getCoordinate();
+                ColorOcTreeNode* n = tree.updateNode(node_point, true); // nodes auto-prune
+
+                if (it->isGraspingSurface()) n->setColor(0, 255, 0); // GREEN
+                else n->setColor(255, 0, 0); // RED
+            }
+            tree.updateInnerOccupancy();
+        } else {
+            std::cerr << "[OcTreeGraspQuality->ColorOcTree operator] root node of original tree is NULL" << std::endl;
+        }
+        return tree;
     }
     
     void OcTreeGripper::importOcTree(OcTree octree_in)
