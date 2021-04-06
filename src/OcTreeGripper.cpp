@@ -43,6 +43,16 @@ namespace octomap
     {
         OcTreeGripperMemberInit.ensureLinking();
     }
+
+    OcTreeGripper::OcTreeGripper(std::string _filename) : OccupancyOcTreeBase<OcTreeGripperNode>(0.1) // resolution will be set according to tree file
+    {
+        OcTreeGripperMemberInit.ensureLinking();
+        AbstractOcTree* tree = AbstractOcTree::read(_filename);
+        OcTreeGripper* grtree = dynamic_cast<OcTreeGripper*>(tree);
+        this->setResolution(grtree->getResolution());
+        this->root = grtree->getRoot(); // this will recursively copy all nodes
+        //delete tree;
+    }
     
     // Type casting to ColorOcTree with 255 green set as grasping surface and 255 red as non-grasping surface
     OcTreeGripper::operator ColorOcTree () const

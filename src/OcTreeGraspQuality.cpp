@@ -69,6 +69,16 @@ namespace octomap
     {
         ocTreeGraspQualityMemberInit.ensureLinking();
     }
+
+    OcTreeGraspQuality::OcTreeGraspQuality(std::string _filename) : OccupancyOcTreeBase<OcTreeGraspQualityNode>(0.1) // resolution will be set according to tree file
+    {
+        ocTreeGraspQualityMemberInit.ensureLinking();
+        AbstractOcTree* tree = AbstractOcTree::read(_filename);
+        OcTreeGraspQuality* gqtree = dynamic_cast<OcTreeGraspQuality*>(tree);
+        this->setResolution(gqtree->getResolution());
+        this->root = gqtree->getRoot(); // this will recursively copy all nodes
+        //delete tree; // octomap delays with pointer management on the backend?
+    }
     
     // Type casting to ColorOcTree with 255 green set as perfect grasp quality and 255 red as zero grasp quality
     OcTreeGraspQuality::operator ColorOcTree () const

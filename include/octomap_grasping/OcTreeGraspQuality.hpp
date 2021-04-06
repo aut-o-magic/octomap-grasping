@@ -106,6 +106,12 @@ namespace octomap
     public:
     OcTreeGraspQuality(double resolution);
 
+    /**
+     * Reads an OcTree from an object tree file
+     * @param _filename Filename
+     */
+    OcTreeGraspQuality(std::string _filename);
+
     OcTreeGraspQuality* create() const {return new OcTreeGraspQuality(resolution);}
 
     std::string getTreeType() const {return "OcTreeGraspQuality";}

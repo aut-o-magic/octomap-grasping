@@ -60,6 +60,12 @@ namespace octomap
     public:
     OcTreeGripper(double resolution);
 
+    /**
+     * Reads an OcTree from an object tree file
+     * @param _filename Filename
+     */
+    OcTreeGripper(std::string _filename);
+
     OcTreeGripper* create() const {return new OcTreeGripper(resolution);}
 
     std::string getTreeType() const {return "OcTreeGripper";}
