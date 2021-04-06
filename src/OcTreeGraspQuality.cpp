@@ -90,7 +90,7 @@ namespace octomap
             OcTreeGraspQuality* temp_tree = new OcTreeGraspQuality(this->getResolution()); // calling delete on the raw pointer leads to seg fault, I suspect something weird with octomap's library implementation?
             temp_tree->root = this->getRoot(); // this will recursively copy all children
             temp_tree->expand();
-
+            
             // Copy tree occupancy contents and convert GQ to color scale
             for(OcTreeGraspQuality::leaf_iterator it = temp_tree->begin_leafs(), end=temp_tree->end_leafs(); it!= end; ++it)
             {
@@ -132,7 +132,11 @@ namespace octomap
             if (depth_node > max_depth) max_depth = depth_node;
             if (depth_node < min_depth) min_depth = depth_node;
 
-            this->updateNode(node_point, true);
+            OcTreeGraspQualityNode* n = this->updateNode(node_point, true);
+            if (n->isGraspQualitySet())
+            {
+                std::cerr << "[importOcTree] ERROR: grasp quality should not be set on newly created octree" << std::endl;
+            }
         }
         this->updateInnerOccupancy();
         //std::cout << "max_depth=" << max_depth << std::endl << "min_depth=" << min_depth <<std::endl; // debug print

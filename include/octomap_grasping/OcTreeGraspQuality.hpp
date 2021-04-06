@@ -24,6 +24,7 @@ namespace octomap
       GraspQuality() : normal{1,0,0}, angle_quality{}
       {
         angle_quality.row(0).setLinSpaced(0, M_PI_2);
+        angle_quality.row(1).setZero();
       }
       GraspQuality(Eigen::Vector3f _normal, Eigen::Matrix<float, 2, ORIENTATION_STEPS> _angle_quality) : normal{_normal}, angle_quality{_angle_quality} {}
       /* UNNECESSARY
@@ -86,7 +87,7 @@ namespace octomap
      */
     inline bool isGraspQualitySet() const
     {
-      return grasp_quality.angle_quality.row(1).isZero();
+      return !grasp_quality.angle_quality.row(1).isZero(); // if all grasp qualities are zero (which is the value they are initialised to), most certainly the quality is not set
     }
 
     operator ColorOcTreeNode () const;
