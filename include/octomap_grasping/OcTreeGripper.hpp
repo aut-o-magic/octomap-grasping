@@ -77,7 +77,7 @@ namespace octomap
       if (this == &rhs)
         return *this;
 
-      this->resolution = rhs.resolution;
+      this->setResolution(rhs.getResolution());
       this->root = rhs.root;
       return *this;
     }
