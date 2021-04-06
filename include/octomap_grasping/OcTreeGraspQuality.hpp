@@ -124,7 +124,8 @@ namespace octomap
       if (this == &rhs)
         return *this;
 
-      *this = rhs;
+      this->resolution = rhs.resolution;
+      this->root = rhs.root;
       return *this;
     }
 
