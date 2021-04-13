@@ -39,7 +39,7 @@ namespace octomap
 
     // tree implementation --------------------------
 
-    OcTreeGripper::OcTreeGripper(double resolution) : OccupancyOcTreeBase<OcTreeGripperNode>(resolution), pointing_to_target_surface_normal{0,0,1}
+    OcTreeGripper::OcTreeGripper(double resolution) : OccupancyOcTreeBase<OcTreeGripperNode>(resolution)
     {
         OcTreeGripperMemberInit.ensureLinking();
     }
@@ -161,14 +161,22 @@ namespace octomap
         this->updateInnerOccupancyRecurs(this->root, 0);
     }
 
-    void OcTreeGripper::setGripperOrientation(Eigen::Vector3f& vector)
+    void OcTreeGripper::setOrigin(const octomap::point3d& translation)
     {
-        this->pointing_to_target_surface_normal = vector;
-    }
+        this->expand();
 
-    Eigen::Vector3f OcTreeGripper::getGripperOrientation() const
-    {
-        return this->pointing_to_target_surface_normal;
+        // new octree
+        octomap::OcTreeGripper* new_tree = new octomap::OcTreeGripper(this->getResolution());
+
+        // iterate over current tree and copy transformed nodes to new tree
+        for (octomap::OcTreeGripper::leaf_iterator it = this->begin_leafs(), end=this->end_leafs(); it!= end; ++it)
+        {
+            octomap::point3d coord{it.getCoordinate() - translation};
+            octomap::OcTreeGripperNode* n = new_tree->updateNode(coord, it->getLogOdds());
+            n->setIsGraspingSurface(it->isGraspingSurface());
+        }
+        new_tree->updateInnerOccupancy();
+        this->root = new_tree->getRoot(); // recursively copy all nodes to *this
     }
 
     void OcTreeGripper::updateInnerOccupancyRecurs(OcTreeGripperNode* node, unsigned int depth) {

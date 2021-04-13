@@ -120,15 +120,15 @@ namespace octomap
     // update inner nodes, sets grasp quality to average child grasp quality
     void updateInnerOccupancy();
 
-    void setGripperOrientation(Eigen::Vector3f&);
-
-    Eigen::Vector3f getGripperOrientation() const;
+    /**
+     * Translates the tree origin according to the input parameter (origin - translation)
+     * @param translation Linear translation vector to new origin
+     */
+    void setOrigin(const octomap::point3d& translation);
 
     virtual ~OcTreeGripper() {};
     
     protected:
-    Eigen::Vector3f pointing_to_target_surface_normal; // Gripper orientation
-
     void updateInnerOccupancyRecurs(OcTreeGripperNode* node, unsigned int depth);
 
     /**
