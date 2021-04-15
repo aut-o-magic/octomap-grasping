@@ -161,6 +161,24 @@ namespace octomap
         this->updateInnerOccupancyRecurs(this->root, 0);
     }
 
+    const unsigned long& OcTreeGripper::getNumGraspableVoxels()
+    {
+      if (!this->isChangeDetectionEnabled())
+      {
+        this->enableChangeDetection(true); // enable change detection
+      }
+      this->expand();
+
+      if (this->numChangesDetected() || !this->graspable_voxels) // if changes detected or graspable_voxels uninitialised (zero)
+      {
+        for(OcTreeGripper::leaf_iterator it = this->begin_leafs(), end=this->end_leafs(); it!= end; ++it)
+        {
+          if (it->isGraspingSurface()) graspable_voxels++;
+        }
+      }
+      return graspable_voxels;
+    }
+
     void OcTreeGripper::setOrigin(const octomap::point3d& translation)
     {
         this->expand();
