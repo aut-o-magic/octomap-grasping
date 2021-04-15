@@ -39,12 +39,12 @@ namespace octomap
 
     // tree implementation --------------------------
 
-    OcTreeGripper::OcTreeGripper(double resolution) : OccupancyOcTreeBase<OcTreeGripperNode>(resolution)
+    OcTreeGripper::OcTreeGripper(double resolution) : OccupancyOcTreeBase<OcTreeGripperNode>(resolution), graspable_voxels{0}
     {
         OcTreeGripperMemberInit.ensureLinking();
     }
 
-    OcTreeGripper::OcTreeGripper(std::string _filename) : OccupancyOcTreeBase<OcTreeGripperNode>(0.1) // resolution will be set according to tree file
+    OcTreeGripper::OcTreeGripper(std::string _filename) : OccupancyOcTreeBase<OcTreeGripperNode>(0.1), graspable_voxels{0} // tree resolution will be set according to tree file
     {
         OcTreeGripperMemberInit.ensureLinking();
         AbstractOcTree* tree = AbstractOcTree::read(_filename);

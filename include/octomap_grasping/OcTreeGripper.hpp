@@ -79,6 +79,7 @@ namespace octomap
 
       this->setResolution(rhs.getResolution());
       this->root = rhs.root;
+      this->graspable_voxels = rhs.graspable_voxels;
       return *this;
     }
 
@@ -121,6 +122,29 @@ namespace octomap
     void updateInnerOccupancy();
 
     /**
+     * Get number of graspable voxels at max depth of the tree
+     * @returns Graspable voxels count in tree
+     */
+    const unsigned long& getNumGraspableVoxels()
+    {
+      if (!this->isChangeDetectionEnabled())
+      {
+        std::cout << "CHANGE DETECTION ENABLED" << std::endl;
+        this->enableChangeDetection(true); // enable change detection
+      }
+      this->expand();
+
+      if (this->numChangesDetected() || !this->graspable_voxels) // if changes detected or grasp_voxels  uninitialised (zero)
+      {
+        for(OcTreeGripper::leaf_iterator it = this->begin_leafs(), end=this->end_leafs(); it!= end; ++it)
+        {
+          if (it->isGraspingSurface()) graspable_voxels++;
+        }
+      }
+      return graspable_voxels;
+    }
+
+    /**
      * Translates the tree origin according to the input parameter (origin - translation)
      * @param translation Linear translation vector to new origin
      */
@@ -153,8 +177,12 @@ namespace octomap
       */
       void ensureLinking() {};
     };
+
     /// to ensure static initialization (only once)
     static StaticMemberInitializer OcTreeGripperMemberInit;
+
+    // stores graspable voxel count for grasp quality score normalisation
+    unsigned long graspable_voxels;
   };
 
   /**
