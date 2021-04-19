@@ -22,7 +22,6 @@ namespace octomap
     }
 
     OcTreeGraspQualityNode::GraspQuality OcTreeGraspQualityNode::getAverageChildGraspQuality() const {
-        Eigen::Vector3f normal;
         Eigen::Matrix<float, 2, ORIENTATION_STEPS> angle_quality; // orientation of the gripper and numeric grasp quality
         int c = 0;
         
@@ -31,7 +30,6 @@ namespace octomap
                 OcTreeGraspQualityNode* child = static_cast<OcTreeGraspQualityNode*>(children[i]);
 
                 if (child && child->isGraspQualitySet()) { // if child not NULL && grasp quality is meaningful
-                    normal += child->getGraspQuality().normal;
                     angle_quality += child->getGraspQuality().angle_quality;
                     ++c;
                 }
@@ -39,9 +37,8 @@ namespace octomap
         }
 
         if (c > 0) {
-            normal /= c;
             angle_quality /= c;
-            return OcTreeGraspQualityNode::GraspQuality{normal, angle_quality};
+            return OcTreeGraspQualityNode::GraspQuality{angle_quality};
         }
         else { // no child had a set grasp quality
             return OcTreeGraspQualityNode::GraspQuality{};
@@ -80,14 +77,14 @@ namespace octomap
         //delete tree; // octomap delays with pointer management on the backend?
     }
     
-    // Type casting to ColorOcTree with 255 green set as perfect grasp quality and 255 red as zero grasp quality
+    // Type casting to ColorOcTree with 255 green set as perfect grasp quality and 255 red as zero grasp quality. GQ in range [0,1]
     OcTreeGraspQuality::operator ColorOcTree () const
     {
         ColorOcTree tree{this->getResolution()};
         if (this->root) // if not NULL
         {    
             // temp tree as modification (tree expansion) is needed for type casting operation
-            OcTreeGraspQuality* temp_tree = new OcTreeGraspQuality(this->getResolution()); // calling delete on the raw pointer leads to seg fault, I suspect something weird with octomap's library implementation?
+            OcTreeGraspQuality* temp_tree = new OcTreeGraspQuality(this->getResolution());
             temp_tree->root = this->getRoot(); // this will recursively copy all children
             temp_tree->expand();
             
@@ -98,11 +95,11 @@ namespace octomap
                 point3d node_point = it.getCoordinate();
                 ColorOcTreeNode* n = tree.updateNode(node_point, true); // nodes auto-prune
 
-                // convert GQ to Red-Green color scale
+                // convert GQ to Red-(Yellow)-Green color scale
                 float max_gq = it->getGraspQuality().angle_quality.row(1).maxCoeff();
                 uint16_t rg = max_gq*512;
-                uint8_t r = std::max(255-rg,0);
-                uint8_t g = std::max(rg-256,0);
+                uint8_t r = std::min(std::max(512-rg,0),255); // bound between [0,255]
+                uint8_t g = std::min(std::max(rg-512,0),255);
                 n->setColor(r, g, 0);
             }
             tree.updateInnerOccupancy();
@@ -142,12 +139,12 @@ namespace octomap
         //std::cout << "max_depth=" << max_depth << std::endl << "min_depth=" << min_depth <<std::endl; // debug print
     }
 
-    OcTreeGraspQualityNode* OcTreeGraspQuality::setNodeGraspQuality(const OcTreeKey& key, Eigen::Vector3f& _normal, Eigen::Matrix<float, 2, ORIENTATION_STEPS>& _angle_quality)
+    OcTreeGraspQualityNode* OcTreeGraspQuality::setNodeGraspQuality(const OcTreeKey& key, Eigen::Matrix<float, 2, ORIENTATION_STEPS>& _angle_quality)
     {
         OcTreeGraspQualityNode* n = search(key);
         if (n) // if not null
         {
-            n->setGraspQuality(_normal, _angle_quality);
+            n->setGraspQuality(_angle_quality);
         }
         return n;
     }
@@ -185,7 +182,7 @@ namespace octomap
         return false;
 
         for (unsigned int i = 1; i<8; i++) {
-            // compare nodes only using their occupancy, ignoring color for pruning
+            // compare nodes only using their occupancy, ignoring other attributes for pruning
             if (!nodeChildExists(node, i) || nodeHasChildren(getNodeChild(node, i)) || !(getNodeChild(node, i)->getValue() == firstChild->getValue()))
                 return false;
         }
@@ -193,7 +190,7 @@ namespace octomap
         return true;
     }
 
-    void OcTreeGraspQuality::writeGraspQualityHistogram(std::string filename)
+    void OcTreeGraspQuality::writeGraspQualityHistogram(std::string filename) const
     {
         #ifdef _MSC_VER
             fprintf(stderr, "The color histogram uses gnuplot, this is not supported under windows.\n");
@@ -261,4 +258,4 @@ namespace octomap
 
     OcTreeGraspQuality::StaticMemberInitializer OcTreeGraspQuality::ocTreeGraspQualityMemberInit;
 
-}  // namespace octomap_grasping
+}  // namespace octomap

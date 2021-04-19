@@ -8,7 +8,7 @@
 #include <eigen3/Eigen/Dense>
 #include <octomap/OcTree.h>
 
-#define ORIENTATION_STEPS 18 // discretisation of planar gripper orientation for grasp planning 
+#define ORIENTATION_STEPS 4 // discretisation of planar gripper orientation for grasp planning 
 
 namespace octomap
 {
@@ -21,28 +21,26 @@ namespace octomap
     class GraspQuality
     {
       public:
-      GraspQuality() : normal{1,0,0}, angle_quality{}
+      GraspQuality() : angle_quality{}
       {
         angle_quality.row(0).setLinSpaced(0, M_PI_2);
         angle_quality.row(1).setZero();
       }
-      GraspQuality(Eigen::Vector3f _normal, Eigen::Matrix<float, 2, ORIENTATION_STEPS> _angle_quality) : normal{_normal}, angle_quality{_angle_quality} {}
+      GraspQuality(Eigen::Matrix<float, 2, ORIENTATION_STEPS> _angle_quality) : angle_quality{_angle_quality} {}
       /* UNNECESSARY
       inline void operator= (const GraspQuality& other)
       {
-        normal = other.normal;
         angle_quality = other.angle_quality;
       }*/
       inline bool operator== (const GraspQuality& other) const
       {
-        return (normal == other.normal && angle_quality == other.angle_quality);
+        return (angle_quality == other.angle_quality);
       }
       inline bool operator!= (const GraspQuality& other) const
       {
-        return (normal != other.normal && angle_quality != other.angle_quality);
+        return (angle_quality != other.angle_quality);
       }
 
-      Eigen::Vector3f normal;
       Eigen::Matrix<float, 2, ORIENTATION_STEPS> angle_quality; // orientation of the gripper and numeric grasp quality
     };
 
@@ -72,9 +70,9 @@ namespace octomap
 
     inline void setGraspQuality(GraspQuality gq) {this->grasp_quality = gq;}
 
-    inline void setGraspQuality(Eigen::Vector3f _normal, Eigen::Matrix<float, 2, ORIENTATION_STEPS> _angle_quality)
+    inline void setGraspQuality(Eigen::Matrix<float, 2, ORIENTATION_STEPS> _angle_quality)
     {
-      this->grasp_quality = GraspQuality(_normal, _angle_quality);
+      this->grasp_quality = GraspQuality(_angle_quality);
     }
 
     void updateGraspQualityChildren();
@@ -143,20 +141,20 @@ namespace octomap
 
     virtual bool isNodeCollapsible(const OcTreeGraspQualityNode* node) const;
 
-    OcTreeGraspQualityNode* setNodeGraspQuality(const OcTreeKey& key, Eigen::Vector3f& _normal, Eigen::Matrix<float, 2, ORIENTATION_STEPS>& _angle_quality);
+    OcTreeGraspQualityNode* setNodeGraspQuality(const OcTreeKey& key, Eigen::Matrix<float, 2, ORIENTATION_STEPS>& _angle_quality);
 
-    OcTreeGraspQualityNode* setNodeGraspQuality(const point3d& octo_point3d, Eigen::Vector3f& _normal, Eigen::Matrix<float, 2, ORIENTATION_STEPS>& _angle_quality)
+    OcTreeGraspQualityNode* setNodeGraspQuality(const point3d& octo_point3d, Eigen::Matrix<float, 2, ORIENTATION_STEPS>& _angle_quality)
     {
       OcTreeKey key;
       if (!this->coordToKeyChecked(octo_point3d, key)) return NULL;
-      return setNodeGraspQuality(key,_normal, _angle_quality);
+      return setNodeGraspQuality(key, _angle_quality);
     }
 
-    OcTreeGraspQualityNode* setNodeGraspQuality(float x, float y, float z, Eigen::Vector3f& _normal, Eigen::Matrix<float, 2, ORIENTATION_STEPS>& _angle_quality)
+    OcTreeGraspQualityNode* setNodeGraspQuality(float x, float y, float z, Eigen::Matrix<float, 2, ORIENTATION_STEPS>& _angle_quality)
     {
       OcTreeKey key;
       if (!this->coordToKeyChecked(point3d(x,y,z), key)) return NULL;
-      return setNodeGraspQuality(key,_normal, _angle_quality);
+      return setNodeGraspQuality(key, _angle_quality);
     }
 
     //TODO integrate/averageNodeGraspQuality functions... (line 143-164 ColorOcTree file https://github.com/OctoMap/octomap/blob/ros2/octomap/include/octomap/ColorOcTree.h)
@@ -165,7 +163,7 @@ namespace octomap
     void updateInnerOccupancy();
 
     // uses gnuplot to plot a histogram in EPS format
-    void writeGraspQualityHistogram(std::string filename);
+    void writeGraspQualityHistogram(std::string filename) const;
 
     virtual ~OcTreeGraspQuality() {};
     
