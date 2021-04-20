@@ -39,7 +39,7 @@ namespace octomap
 
     // tree implementation --------------------------
 
-    OcTreeGripper::OcTreeGripper(double resolution) : OccupancyOcTreeBase<OcTreeGripperNode>(resolution), graspable_voxels{0}
+    OcTreeGripper::OcTreeGripper(double resolution) : OccupancyOcTreeBase<OcTreeGripperNode>(resolution), graspable_voxels{0}, grasping_normal{0,1,0}
     {
         OcTreeGripperMemberInit.ensureLinking();
     }
@@ -51,6 +51,8 @@ namespace octomap
         OcTreeGripper* grtree = dynamic_cast<OcTreeGripper*>(tree);
         this->setResolution(grtree->getResolution());
         this->root = grtree->getRoot(); // this will recursively copy all nodes
+        this->graspable_voxels = grtree->graspable_voxels;
+        this->grasping_normal = grtree->grasping_normal;
         //delete tree;
     }
     

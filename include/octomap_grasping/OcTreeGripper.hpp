@@ -80,6 +80,7 @@ namespace octomap
       this->setResolution(rhs.getResolution());
       this->root = rhs.root;
       this->graspable_voxels = rhs.graspable_voxels;
+      this->grasping_normal = rhs.grasping_normal;
       return *this;
     }
 
@@ -128,6 +129,18 @@ namespace octomap
     const unsigned long& getNumGraspableVoxels();
 
     /**
+     * Get pointing vector towards object to grasp in gripper reference frame
+     * @returns Pointing vector
+     */
+    inline const point3d getGraspingNormal() const {return grasping_normal;};
+
+    /**
+     * Set pointing vector towards object to grasp in gripper reference frame
+     * @param __grasping_normal Pointing vector
+     */
+    inline void setGraspingNormal(point3d __grasping_normal) {this->grasping_normal = __grasping_normal;};
+
+    /**
      * Translates the tree origin according to the input parameter (origin - translation)
      * @param translation Linear translation vector to new origin
      */
@@ -166,6 +179,7 @@ namespace octomap
 
     // stores graspable voxel count for grasp quality score normalisation
     unsigned long graspable_voxels;
+    point3d grasping_normal; // Pointing vector towards object to grasp in gripper reference frame
   };
 
   /**
