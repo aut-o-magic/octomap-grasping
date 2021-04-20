@@ -98,8 +98,8 @@ namespace octomap
                 // convert GQ to Red-(Yellow)-Green color scale
                 float max_gq = it->getGraspQuality().angle_quality.row(1).maxCoeff();
                 uint16_t rg = max_gq*512;
-                uint8_t r = std::min(std::max(512-rg,0),255); // bound between [0,255]
-                uint8_t g = std::min(std::max(rg-512,0),255);
+                uint8_t r = std::min(std::max(512-rg,0),255); // Color channels bound between [0,255]
+                uint8_t g = std::min(std::max(rg-128,0),255); // ? Yellow level shifted to 25% grasp quality, provides much clearer/nicer visualisation
                 n->setColor(r, g, 0);
             }
             tree.updateInnerOccupancy();
@@ -189,7 +189,7 @@ namespace octomap
 
         return true;
     }
-
+    // ! Not working well
     void OcTreeGraspQuality::writeGraspQualityHistogram(std::string filename) const
     {
         #ifdef _MSC_VER
@@ -199,10 +199,10 @@ namespace octomap
             std::vector<int> histogram_r (256,0);
             std::vector<int> histogram_g (256,0);
             std::vector<int> histogram_b (256,0);
-            ColorOcTree color_tree{*this};
-            for(ColorOcTree::tree_iterator it = color_tree.begin_tree(),
-                end=color_tree.end_tree(); it!= end; ++it) {
-            if (!it.isLeaf() || !color_tree.isNodeOccupied(*it)) continue;
+            ColorOcTree color_tree{(ColorOcTree)*this};
+            for(ColorOcTree::leaf_iterator it = color_tree.begin_leafs(),
+                end=color_tree.end_leafs(); it!= end; ++it) {
+            if (!color_tree.isNodeOccupied(*it)) continue;
             ColorOcTreeNode::Color& c = it->getColor();
             ++histogram_r[c.r];
             ++histogram_g[c.g];
