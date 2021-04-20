@@ -138,7 +138,7 @@ namespace octomap
      * Set pointing vector towards object to grasp in gripper reference frame
      * @param __grasping_normal Pointing vector
      */
-    inline void setGraspingNormal(point3d __grasping_normal) {this->grasping_normal = __grasping_normal;};
+    inline void setGraspingNormal(const point3d& __grasping_normal) {this->grasping_normal = __grasping_normal;};
 
     /**
      * Translates the tree origin according to the input parameter (origin - translation)
