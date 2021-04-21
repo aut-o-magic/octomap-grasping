@@ -93,7 +93,7 @@ namespace octomap
             {
                 // cannot use node key as it is only valid for the previous node
                 point3d node_point = it.getCoordinate();
-                ColorOcTreeNode* n = tree.updateNode(node_point, true); // nodes auto-prune
+                ColorOcTreeNode* n = tree.updateNode(node_point, it->getLogOdds()); // nodes auto-prune
 
                 // convert GQ to Red-(Yellow)-Green color scale
                 float max_gq = it->getGraspQuality().angle_quality.row(1).maxCoeff();
