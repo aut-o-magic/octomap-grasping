@@ -72,7 +72,7 @@ namespace octomap
             {
                 // cannot use node key as it is only valid for the previous node
                 point3d node_point = it.getCoordinate();
-                ColorOcTreeNode* n = tree.updateNode(node_point, true); // nodes auto-prune
+                ColorOcTreeNode* n = tree.updateNode(node_point, it->getLogOdds()); // nodes auto-prune
 
                 if (it->isGraspingSurface()) n->setColor(0, 255, 0); // GREEN
                 else n->setColor(255, 0, 0); // RED
