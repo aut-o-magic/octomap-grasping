@@ -123,10 +123,15 @@ namespace octomap
     void updateInnerOccupancy();
 
     /**
+     * Update the object attribute storing the number of graspable voxels at max depth of the tree
+     */
+    void updateNumGraspableVoxels();
+
+    /**
      * Get number of graspable voxels at max depth of the tree
      * @returns Graspable voxels count in tree
      */
-    const unsigned long& getNumGraspableVoxels();
+    const unsigned long& getNumGraspableVoxels() const;
 
     /**
      * Get pointing vector towards object to grasp in gripper reference frame

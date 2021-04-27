@@ -163,20 +163,28 @@ namespace octomap
         this->updateInnerOccupancyRecurs(this->root, 0);
     }
 
-    const unsigned long& OcTreeGripper::getNumGraspableVoxels()
+    void OcTreeGripper::updateNumGraspableVoxels()
     {
-      if (!this->isChangeDetectionEnabled())
-      {
-        this->enableChangeDetection(true); // enable change detection
-      }
-      this->expand();
+        if (!this->isChangeDetectionEnabled())
+        {
+            this->enableChangeDetection(true); // enable change detection
+        }
+        this->expand();
 
+        if (this->numChangesDetected() || !this->graspable_voxels) // if changes detected or graspable_voxels     uninitialised (zero)
+        {
+            for(OcTreeGripper::leaf_iterator it = this->begin_leafs(), end=this->end_leafs(); it!= end; ++it)
+            {
+                if (it->isGraspingSurface()) this->graspable_voxels++;
+            }
+        }
+    }
+
+    const unsigned long& OcTreeGripper::getNumGraspableVoxels() const
+    {
       if (this->numChangesDetected() || !this->graspable_voxels) // if changes detected or graspable_voxels uninitialised (zero)
       {
-        for(OcTreeGripper::leaf_iterator it = this->begin_leafs(), end=this->end_leafs(); it!= end; ++it)
-        {
-          if (it->isGraspingSurface()) graspable_voxels++;
-        }
+        std::cerr << "[OcTreeGripper::getNumGraspableVoxels] Warning: Changes detected or empty attribute. Value may be outdated" << std::endl;
       }
       return graspable_voxels;
     }
