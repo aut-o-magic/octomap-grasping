@@ -88,8 +88,8 @@ namespace octomap
     // Custom conversion function with color coding for grasp quality
     operator ColorOcTree() const;
 
-    // CUstom import function from generic OcTree
-    void importOcTree(OcTree); // TODO Fix function signature to pass by const reference
+    // Custom import function from generic OcTree
+    void importOcTree(const OcTree*);
 
     /**
      * Prunes a node when it is collapsible. This overloaded

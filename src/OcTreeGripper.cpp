@@ -84,18 +84,15 @@ namespace octomap
         return tree;
     }
     
-    void OcTreeGripper::importOcTree(OcTree octree_in)
+    void OcTreeGripper::importOcTree(const OcTree *octree_in)
     {
-        // ! debug variables, no need to disable as their overhead is negligible
         unsigned int max_depth{0};
         unsigned int min_depth{16};
- 
-        octree_in.expand(); // expand all nodes to have all leafs at the highest depth
 
         this->clear(); // must delete all data as resetting resolution would void metric scale
-        this->setResolution(octree_in.getResolution());
+        this->setResolution(octree_in->getResolution());
         // Copy tree occupancy contents
-        for(OcTree::leaf_iterator it = octree_in.begin_leafs(), end=octree_in.end_leafs(); it!= end; ++it)
+        for(OcTree::leaf_iterator it = octree_in->begin_leafs(), end=octree_in->end_leafs(); it!= end; ++it)
         {
             // cannot use node key as it is only valid for the previous node
             point3d node_point = it.getCoordinate();
@@ -106,7 +103,9 @@ namespace octomap
 
             this->updateNode(node_point, true);
         }
-        //std::cout << "max_depth=" << max_depth << std::endl << "min_depth=" << min_depth <<std::endl; // ! debug print
+        if (max_depth != min_depth) std::cerr << "[OcTreeGripper::importOcTree] Warning: max (" << max_depth << ") and min (" << min_depth << ") tree depth are not equal. Input tree pruned?" << std::endl;
+        this->updateInnerOccupancy();
+        //std::cout << "max_depth=" << max_depth << std::endl << "min_depth=" << min_depth <<std::endl; // debug print
     }
 
     OcTreeGripperNode* OcTreeGripper::setNodeIsGraspingSurface(const OcTreeKey& key, bool grasping_surface_flag)
