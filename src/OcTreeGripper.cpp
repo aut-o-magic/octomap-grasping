@@ -103,7 +103,6 @@ namespace octomap
 
             this->updateNode(node_point, true);
         }
-        if (max_depth != min_depth) std::cerr << "[OcTreeGripper::importOcTree] Warning: max (" << max_depth << ") and min (" << min_depth << ") tree depth are not equal. Input tree pruned?" << std::endl;
         this->updateInnerOccupancy();
         //std::cout << "max_depth=" << max_depth << std::endl << "min_depth=" << min_depth <<std::endl; // debug print
     }
