@@ -180,11 +180,14 @@ namespace octomap
 
     const unsigned long& OcTreeGripper::getNumGraspableVoxels() const
     {
-      if (this->numChangesDetected() || !this->graspable_voxels) // if changes detected or graspable_voxels uninitialised (zero)
-      {
-        std::cerr << "[OcTreeGripper::getNumGraspableVoxels] Warning: Changes detected or empty attribute. Value may be outdated" << std::endl;
-      }
-      return graspable_voxels;
+        if (this->numChangesDetected() || !this->graspable_voxels) // if changes detected or graspable_voxels uninitialised (zero)
+        {
+            std::string reason{};
+            if (this->numChangesDetected()) reason += "Changes detected. ";
+            if (!this->graspable_voxels) reason += "Empty attribute. ";
+            std::cerr << "[OcTreeGripper::getNumGraspableVoxels] Warning: " << reason << "Value may be outdated" << std::endl;
+        }
+        return graspable_voxels;
     }
 
     void OcTreeGripper::setOrigin(const octomap::point3d& translation)
