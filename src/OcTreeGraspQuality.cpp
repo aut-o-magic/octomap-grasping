@@ -99,7 +99,7 @@ namespace octomap
                 float max_gq = it->getGraspQuality().angle_quality.row(1).maxCoeff();
                 uint16_t rg = max_gq*512;
                 uint8_t r = std::min(std::max(512-rg,0),255); // Color channels bound between [0,255]
-                uint8_t g = std::min(std::max(rg-128,0),255); // ? Yellow level shifted to 25% grasp quality, provides much clearer/nicer visualisation
+                uint8_t g = std::min(std::max(rg-51,0),255); // ? Yellow level shifted to ~10% grasp quality, provides much clearer/nicer visualisation
                 n->setColor(r, g, 0);
             }
             tree.updateInnerOccupancy();
