@@ -101,7 +101,7 @@ namespace octomap
             if (depth_node > max_depth) max_depth = depth_node;
             if (depth_node < min_depth) min_depth = depth_node;
 
-            this->updateNode(node_point, true);
+            this->updateNode(node_point, it->getLogOdds());
         }
         this->updateInnerOccupancy();
         //std::cout << "max_depth=" << max_depth << std::endl << "min_depth=" << min_depth <<std::endl; // debug print
