@@ -171,6 +171,7 @@ namespace octomap
 
         if (this->numChangesDetected() || !this->graspable_voxels) // if changes detected or graspable_voxels     uninitialised (zero)
         {
+            this->graspable_voxels = 0; // reset
             for(OcTreeGripper::leaf_iterator it = this->begin_leafs(), end=this->end_leafs(); it!= end; ++it)
             {
                 if (it->isGraspingSurface()) this->graspable_voxels++;
