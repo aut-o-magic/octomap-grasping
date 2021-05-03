@@ -175,6 +175,7 @@ namespace octomap
             {
                 if (it->isGraspingSurface()) this->graspable_voxels++;
             }
+            this->resetChangeDetection();
         }
     }
 
