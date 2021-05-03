@@ -197,10 +197,17 @@ namespace octomap
         // new octree
         octomap::OcTreeGripper* new_tree = new octomap::OcTreeGripper(this->getResolution());
 
+        // match translation to resolution steps
+        const float res{(float)new_tree->getResolution()};
+        const float x{std::round(translation.x()/res)*res};
+        const float y{std::round(translation.y()/res)*res};
+        const float z{std::round(translation.z()/res)*res};
+        const octomap::point3d matched_translation{x,y,z};
+
         // iterate over current tree and copy transformed nodes to new tree
         for (octomap::OcTreeGripper::leaf_iterator it = this->begin_leafs(), end=this->end_leafs(); it!= end; ++it)
         {
-            octomap::point3d coord{it.getCoordinate() - translation};
+            octomap::point3d coord{it.getCoordinate() - matched_translation};
             octomap::OcTreeGripperNode* n = new_tree->updateNode(coord, it->getLogOdds());
             n->setIsGraspingSurface(it->isGraspingSurface());
         }
