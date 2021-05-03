@@ -104,7 +104,7 @@ namespace octomap
             this->updateNode(node_point, it->getLogOdds());
         }
         this->updateInnerOccupancy();
-        //std::cout << "max_depth=" << max_depth << std::endl << "min_depth=" << min_depth <<std::endl; // debug print
+        if (max_depth != min_depth) std::cerr << "[importOcTree] Warning: tree leaf depth is not constant (min = " << min_depth << ", max = " << max_depth << "), pruned tree?" << std::endl;
     }
 
     OcTreeGripperNode* OcTreeGripper::setNodeIsGraspingSurface(const OcTreeKey& key, bool grasping_surface_flag)
