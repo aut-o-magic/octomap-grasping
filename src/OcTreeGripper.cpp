@@ -72,7 +72,7 @@ namespace octomap
             {
                 // cannot use node key as it is only valid for the previous node
                 point3d node_point = it.getCoordinate();
-                ColorOcTreeNode* n = tree.updateNode(node_point, it->getLogOdds()); // nodes auto-prune
+                ColorOcTreeNode* n = tree.updateNode(node_point, it->getLogOdds(), true); // nodes auto-prune
 
                 if (it->isGraspingSurface()) n->setColor(0, 255, 0); // GREEN
                 else n->setColor(255, 0, 0); // RED
@@ -101,7 +101,7 @@ namespace octomap
             if (depth_node > max_depth) max_depth = depth_node;
             if (depth_node < min_depth) min_depth = depth_node;
 
-            this->updateNode(node_point, it->getLogOdds());
+            this->updateNode(node_point, it->getLogOdds(), true);
         }
         this->updateInnerOccupancy();
         if (max_depth != min_depth) std::cerr << "[importOcTree] Warning: tree leaf depth is not constant (min = " << min_depth << ", max = " << max_depth << "), pruned tree?" << std::endl;
@@ -210,7 +210,7 @@ namespace octomap
         for (octomap::OcTreeGripper::leaf_iterator it = this->begin_leafs(), end=this->end_leafs(); it!= end; ++it)
         {
             octomap::point3d coord{it.getCoordinate() - matched_translation};
-            octomap::OcTreeGripperNode* n = new_tree->updateNode(coord, it->getLogOdds());
+            octomap::OcTreeGripperNode* n = new_tree->updateNode(coord, it->getLogOdds(), true);
             n->setIsGraspingSurface(it->isGraspingSurface());
         }
         new_tree->updateInnerOccupancy();

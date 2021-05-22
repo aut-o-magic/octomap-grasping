@@ -93,7 +93,7 @@ namespace octomap
             {
                 // cannot use node key as it is only valid for the previous node
                 point3d node_point = it.getCoordinate();
-                ColorOcTreeNode* n = tree.updateNode(node_point, it->getLogOdds()); // nodes auto-prune
+                ColorOcTreeNode* n = tree.updateNode(node_point, it->getLogOdds(), true);
 
                 // convert GQ to Red-(Yellow)-Green color scale
                 float max_gq = it->getGraspQuality().angle_quality.row(1).maxCoeff();
@@ -126,7 +126,7 @@ namespace octomap
             if (depth_node > max_depth) max_depth = depth_node;
             if (depth_node < min_depth) min_depth = depth_node;
 
-            OcTreeGraspQualityNode* n = this->updateNode(node_point, true);
+            OcTreeGraspQualityNode* n = this->updateNode(node_point, true, true);
             if (n->isGraspQualitySet())
             {
                 std::cerr << "[importOcTree] ERROR: grasp quality should not be set on newly created octree" << std::endl;
