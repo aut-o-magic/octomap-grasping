@@ -157,6 +157,24 @@ namespace octomap
       return setNodeGraspQuality(key, _angle_quality);
     }
 
+    /**
+     * Calculates the direction from the node in the provided coordinates to the center of volume (CoV) of the occupied nodes in the neighborhood. This method will only give either 0 or 1 surface normals, in comparison to getNormals() which can give multiple candidates
+     * @param coords Point coordinates for which to calculate the surface normal
+     * @param normals Surface normals collection to which the calculated normal will be written
+     * @param depth Depth of the neighborhood to map in each direction. A depth of 1 will use a cube of 3x3x3 nodes to calculate the CoV, depth of 2 5x5x5, etc
+     * @returns True for a succesful call, false if point requested is in unknown space
+     */
+    bool getNormal(const point3d& coords, std::vector<point3d>& normals, const unsigned int depth=1U) const;
+
+        /**
+     * Calculates the direction from the node to the center of volume (CoV) of the occupied nodes in the neighborhood. This method will only give either 0 or 1 surface normals, in comparison to getNormals() which can give multiple candidates
+     * @param key Node key for which to calculate the surface normal
+     * @param normals Surface normals collection to which the calculated normal will be written
+     * @param depth Depth of the neighborhood to map in each direction. A depth of 1 will use a cube of 3x3x3 nodes to calculate the CoV, depth of 2 5x5x5, etc
+     * @returns True for a succesful call, false if point requested is in unknown space
+     */
+    bool getNormal(const OcTreeKey& key, std::vector<point3d>& normals, const unsigned int depth=1U) const;
+
     //TODO integrate/averageNodeGraspQuality functions... (line 143-164 ColorOcTree file https://github.com/OctoMap/octomap/blob/ros2/octomap/include/octomap/ColorOcTree.h)
 
     // update inner nodes, sets grasp quality to average child grasp quality
@@ -168,6 +186,10 @@ namespace octomap
     virtual ~OcTreeGraspQuality() {};
     
     protected:
+    point3d_collection getOccupiedNeighbors(const point3d& coords, const unsigned int depth) const;
+
+    point3d_collection getOccupiedNeighbors(const OcTreeKey& center_key, const unsigned int depth) const;
+    
     void updateInnerOccupancyRecurs(OcTreeGraspQualityNode* node, unsigned int depth);
 
     /**

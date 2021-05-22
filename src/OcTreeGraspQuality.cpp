@@ -233,6 +233,67 @@ namespace octomap
         #endif
     }
 
+    point3d_collection OcTreeGraspQuality::getOccupiedNeighbors(const point3d& coords, const unsigned int depth=1U) const
+    {
+        OcTreeKey center_key;
+        if (!this->coordToKeyChecked(coords, this->getTreeDepth(), center_key)) 
+        {
+            std::cerr << "[getOccupiedNeighbors] Error: Point requested not within octree" << std::endl;
+            return point3d_collection{};
+        }
+        return getOccupiedNeighbors(center_key, depth);
+    }
+
+    point3d_collection OcTreeGraspQuality::getOccupiedNeighbors(const OcTreeKey& center_key, const unsigned int depth=1U) const
+    {
+        point3d_collection neighbors;
+        OcTreeKey k;
+        for (k[0] = center_key[0]-depth; k[0] <= center_key[0]+depth; ++k[0]){
+            for (k[1] = center_key[1]-depth; k[1] <= center_key[1]+depth; ++k[1]){
+                for (k[2] = center_key[2]-depth; k[2] <= center_key[2]+depth; ++k[2]){
+                    OcTreeGraspQualityNode* node = this->search(k, this->getTreeDepth());
+                    if (node && this->isNodeOccupied(*node))
+                    {
+                        neighbors.push_back(this->keyToCoord(k));
+                    }
+                }
+            }
+        }
+        if (neighbors.size() > std::pow(1.0F+((float)depth)*2.0F, 3.0F)) std::cerr << "[getOccupiedNeighbors] Error: Neighbors collection larger than theoretical maximum (size=" << neighbors.size() << ", max=" << std::pow(1.0F+((float)depth)*2.0F, 3.0F) << ")" << std::endl;
+        //std::cout << "size=" << neighbors.size() << ", max=" << std::pow(1.0F+((float)depth)*2.0F, 3.0F) << ")" << std::endl;
+        return neighbors;
+    }
+
+    bool OcTreeGraspQuality::getNormal(const point3d& coords, std::vector<point3d>& normals, const unsigned int depth) const
+    {
+        return getNormal(this->coordToKey(coords, this->getTreeDepth()), normals, depth);
+    }
+
+    bool OcTreeGraspQuality::getNormal(const OcTreeKey& key, std::vector<point3d>& normals, const unsigned int depth) const
+    {
+        if (!this->search(key)) return false;
+        const point3d_collection neighbors = getOccupiedNeighbors(key, depth);
+        if (neighbors.size() == std::pow(1.0F+((float)depth)*2.0F, 3.0F)) // if completely full neighbors region, it's not in the surface and there's no normal. Early return
+        {
+            return true;
+        }
+
+        point3d cov{0.0F, 0.0F, 0.0F}; // center of volume
+
+        // calculate CoV
+        for (point3d_collection::const_iterator p = neighbors.cbegin(); p != neighbors.cend(); ++p)
+        {
+            cov += *p;
+        }
+        cov /= neighbors.size();
+
+        // cast vector from center coords to CoM of region, which is the normal
+        point3d normal{(cov-this->keyToCoord(key)).normalized()};
+        normals.push_back(normal);
+
+        return true;
+    }
+
     void OcTreeGraspQuality::updateInnerOccupancy() {
         this->updateInnerOccupancyRecurs(this->root, 0);
     }
