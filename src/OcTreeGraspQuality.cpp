@@ -273,7 +273,7 @@ namespace octomap
     {
         if (!this->search(key)) return false;
         const point3d_collection neighbors = getOccupiedNeighbors(key, depth);
-        if (neighbors.size() == std::pow(1.0F+((float)depth)*2.0F, 3.0F)) // if completely full neighbors region, it's not in the surface and there's no normal. Early return
+        if (neighbors.size() == std::pow(1.0F+((float)depth)*2.0F, 3.0F) || neighbors.empty()) // if completely full or empty neighbors region, it's not part of a surface and there's no normal. Early return
         {
             return true;
         }
@@ -287,9 +287,14 @@ namespace octomap
         }
         cov /= neighbors.size();
 
-        // cast vector from center coords to CoM of region, which is the normal
+        // cast vector from center coords to CoV of region, which is the normal
         point3d normal{(cov-this->keyToCoord(key)).normalized()};
-        normals.push_back(normal);
+        if (normal.norm() < 0.99) // if the CoV is the same as the selected point, because of symmetric neighbors
+        {
+            // use the original (generic) marching cubes algorithm
+            getNormals(this->keyToCoord(key), normals, false);
+        }
+        else normals.push_back(normal);
 
         return true;
     }
