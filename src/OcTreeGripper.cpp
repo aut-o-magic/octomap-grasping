@@ -62,18 +62,13 @@ namespace octomap
         ColorOcTree tree{this->getResolution()};
         if (this->root) // if not NULL
         {    
-            // temp tree as modification (tree expansion) is needed for type casting operation
-            OcTreeGripper* temp_tree{new OcTreeGripper(this->getResolution())}; // calling delete on the raw pointer leads to seg fault, I suspect something weird with octomap's library implementation?
-            temp_tree->root = this->getRoot(); // this will recursively copy all children
-            temp_tree->expand();
-
             // Copy tree occupancy contents and convert GQ to color scale
-            for(OcTreeGripper::leaf_iterator it = temp_tree->begin_leafs(), end=temp_tree->end_leafs(); it!= end; ++it)
+            for(OcTreeGripper::iterator it = this->begin(), end=this->end(); it!= end; ++it)
             {
                 // cannot use node key as it is only valid for the previous node
                 point3d node_point = it.getCoordinate();
-                ColorOcTreeNode* n = tree.updateNode(node_point, it->getLogOdds(), true); // nodes auto-prune
-
+                ColorOcTreeNode* n = tree.updateNode(node_point, it->getLogOdds()+(((float)it->isGraspingSurface())/1e-4F));
+                // Pruning ignores color, therefore slightly alter the log odds update to avoid pruning different node types
                 if (it->isGraspingSurface()) n->setColor(0, 255, 0); // GREEN
                 else n->setColor(255, 0, 0); // RED
             }

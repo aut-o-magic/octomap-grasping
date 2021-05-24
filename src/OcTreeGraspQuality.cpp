@@ -45,17 +45,18 @@ namespace octomap
         }
     }
 
-    // ! Not used nor tested
     OcTreeGraspQualityNode::operator ColorOcTreeNode() const
     {
         ColorOcTreeNode color_node{};
-        // convert GQ to Red-Green color scale
+        // convert GQ to Red-(Yellow)-Green color scale
         float max_gq = this->getGraspQuality().angle_quality.row(1).maxCoeff();
         uint16_t rg = max_gq*512;
-        uint8_t r = std::max(255-rg,0);
-        uint8_t g = std::max(rg-256,0);
+        uint8_t r = std::min(std::max(512-rg,0),255); // Color channels bound between [0,255]
+        uint8_t g = std::min(std::max(rg-51,0),255); // ? Yellow level shifted to ~10% grasp quality, provides much clearer/nicer visualisation
+        
+        // store contents in casted node
+        color_node.setValue(this->getValue()+max_gq/1e-4F); // Pruning ignores color, therefore slightly alter the log odds update to avoid pruning different GQs
         color_node.setColor(r, g, 0);
-        color_node.setLogOdds(this->getLogOdds());
 
         return color_node;
     }
@@ -83,24 +84,11 @@ namespace octomap
         ColorOcTree tree{this->getResolution()};
         if (this->root) // if not NULL
         {    
-            // temp tree as modification (tree expansion) is needed for type casting operation
-            OcTreeGraspQuality* temp_tree = new OcTreeGraspQuality(this->getResolution());
-            temp_tree->root = this->getRoot(); // this will recursively copy all children
-            temp_tree->expand();
-            
-            // Copy tree occupancy contents and convert GQ to color scale
-            for(OcTreeGraspQuality::leaf_iterator it = temp_tree->begin_leafs(), end=temp_tree->end_leafs(); it!= end; ++it)
+           // Copy tree occupancy contents and convert GQ to color scale
+            for(OcTreeGraspQuality::iterator it = this->begin(), end=this->end(); it!= end; ++it)
             {
-                // cannot use node key as it is only valid for the previous node
-                point3d node_point = it.getCoordinate();
-                ColorOcTreeNode* n = tree.updateNode(node_point, it->getLogOdds(), true);
-
-                // convert GQ to Red-(Yellow)-Green color scale
-                float max_gq = it->getGraspQuality().angle_quality.row(1).maxCoeff();
-                uint16_t rg = max_gq*512;
-                uint8_t r = std::min(std::max(512-rg,0),255); // Color channels bound between [0,255]
-                uint8_t g = std::min(std::max(rg-51,0),255); // ? Yellow level shifted to ~10% grasp quality, provides much clearer/nicer visualisation
-                n->setColor(r, g, 0);
+                ColorOcTreeNode* n = tree.updateNode(it.getCoordinate(), true);
+                *n = it->operator octomap::ColorOcTreeNode();
             }
             tree.updateInnerOccupancy();
         } else {
