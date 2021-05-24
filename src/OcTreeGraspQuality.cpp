@@ -179,8 +179,8 @@ namespace octomap
         return false;
 
         for (unsigned int i = 1; i<8; i++) {
-            // compare nodes only using their occupancy, ignoring other attributes for pruning
-            if (!nodeChildExists(node, i) || nodeHasChildren(getNodeChild(node, i)) || !(getNodeChild(node, i)->getValue() == firstChild->getValue()))
+            // compare nodes using the defined == operator for the node class
+            if (!nodeChildExists(node, i) || nodeHasChildren(getNodeChild(node, i)) || !(getNodeChild(node, i)->operator==(*firstChild)))
                 return false;
         }
 
