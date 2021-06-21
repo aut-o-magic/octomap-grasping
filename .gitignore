@@ -2,6 +2,10 @@
 # Created by https://www.toptal.com/developers/gitignore/api/ros,c++,cmake,vscode
 # Edit at https://www.toptal.com/developers/gitignore?templates=ros,c++,cmake,vscode
 
+### Doxygen outputs ###
+html/
+latex/
+
 ### C++ ###
 # Prerequisites
 *.d
