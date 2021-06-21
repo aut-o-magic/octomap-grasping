@@ -55,7 +55,7 @@ namespace octomap
         uint8_t g = std::min(std::max(rg-51,0),255); // ? Yellow level shifted to ~10% grasp quality, provides much clearer/nicer visualisation
         
         // store contents in casted node
-        color_node.setValue(this->getValue()+max_gq/1e-4F); // Pruning ignores color, therefore slightly alter the log odds update to avoid pruning different GQs
+        color_node.setValue(this->getValue()+max_gq*1e-4F); // Pruning ignores color, therefore slightly alter the log odds update to avoid pruning different GQs
         color_node.setColor(r, g, 0);
 
         return color_node;
@@ -114,7 +114,7 @@ namespace octomap
             if (depth_node > max_depth) max_depth = depth_node;
             if (depth_node < min_depth) min_depth = depth_node;
 
-            OcTreeGraspQualityNode* n = this->updateNode(node_point, true, true);
+            OcTreeGraspQualityNode* n = this->updateNode(node_point, it->getLogOdds(), true);
             if (n->isGraspQualitySet())
             {
                 std::cerr << "[importOcTree] ERROR: grasp quality should not be set on newly created octree" << std::endl;
